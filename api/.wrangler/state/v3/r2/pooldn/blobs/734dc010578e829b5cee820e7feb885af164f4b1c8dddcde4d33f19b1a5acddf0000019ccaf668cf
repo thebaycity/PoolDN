@@ -1,8 +1,0 @@
-{
-  "entries": {
-    "team-001": { "id": "team-001", "name": "Dallas Sharks", "captainId": "player-001", "city": "Dallas" },
-    "team-002": { "id": "team-002", "name": "Houston Hustlers", "captainId": "player-002", "city": "Houston" },
-    "team-003": { "id": "team-003", "name": "Austin Aces", "captainId": "player-004", "city": "Austin" },
-    "team-004": { "id": "team-004", "name": "Dallas Coyotes", "captainId": "player-003", "city": "Dallas" }
-  }
-}

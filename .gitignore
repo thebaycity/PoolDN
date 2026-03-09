@@ -1,0 +1,40 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Wrangler local state
+.wrangler/
+.dev.vars
+
+# Xcode
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+
+# Swift Package Manager
+.build/
+Packages/
+
+# Claude
+.claude/
+
+# Misc
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+.env
+.env.*
+docs/
