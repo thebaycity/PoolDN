@@ -1,4 +1,4 @@
-import { eq, and, desc, sql, inArray } from 'drizzle-orm';
+import { eq, and, desc, sql, inArray, like, or } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { Services } from '../utils/helpers';
 import { users, teams, teamInvitations, notifications } from '../db/schema';
@@ -54,6 +54,28 @@ export async function listTeams(services: Services, limit = 20, offset = 0) {
   const totalResult = await db.select({ value: sql<number>`count(*)` }).from(teams).get();
   const total = totalResult?.value ?? 0;
   return { data, total, hasMore: offset + limit < total };
+}
+
+export async function searchTeams(
+  services: Services,
+  query: string,
+  city?: string,
+  limit = 30
+) {
+  const { db } = services;
+  const q = `%${query.trim()}%`;
+  let allTeams = await db.select().from(teams)
+    .where(or(like(teams.name, q), like(teams.city, q)))
+    .orderBy(desc(teams.createdAt))
+    .limit(limit)
+    .all();
+
+  if (city) {
+    const cityLower = city.toLowerCase();
+    allTeams = allTeams.filter(t => t.city?.toLowerCase().includes(cityLower));
+  }
+
+  return allTeams;
 }
 
 export async function updateTeam(

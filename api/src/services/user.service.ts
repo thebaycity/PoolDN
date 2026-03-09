@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { eq, like, or, desc } from 'drizzle-orm';
 import { Services } from '../utils/helpers';
 import { users, teams, matches } from '../db/schema';
 import { AppError } from '../utils/errors';
@@ -9,6 +9,41 @@ export async function getUser(services: Services, id: string) {
   if (!user) throw AppError.notFound('User not found');
   const { passwordHash, ...profile } = user;
   return profile;
+}
+
+export async function searchUsers(
+  services: Services,
+  query: string,
+  limit = 30,
+  excludeUserId?: string,
+  role?: string
+) {
+  const { db } = services;
+  const trimmed = query.trim();
+
+  let rows: any[];
+  if (trimmed.length === 0) {
+    // Browse mode — return all players (newest first)
+    rows = await db
+      .select()
+      .from(users)
+      .orderBy(desc(users.createdAt))
+      .limit(limit)
+      .all();
+  } else {
+    const q = `%${trimmed}%`;
+    rows = await db
+      .select()
+      .from(users)
+      .where(or(like(users.name, q), like(users.nickname, q), like(users.email, q)))
+      .limit(limit)
+      .all();
+  }
+
+  return rows
+    .filter(u => u.id !== excludeUserId)
+    .filter(u => !role || u.role === role)
+    .map(({ passwordHash, ...profile }) => profile);
 }
 
 export async function updateUser(

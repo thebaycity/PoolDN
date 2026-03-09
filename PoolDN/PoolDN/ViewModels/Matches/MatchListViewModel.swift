@@ -14,7 +14,8 @@ class MatchListViewModel {
     func load(competitionId: String) async {
         isLoading = true
         do {
-            matches = try await MatchService.getCompetitionMatches(competitionId)
+            let page = try await MatchService.getCompetitionMatches(competitionId)
+            matches = page.data
             isLoading = false
         } catch {
             isLoading = false

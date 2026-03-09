@@ -52,8 +52,12 @@ enum CompetitionService {
         try await APIClient.shared.post("/competitions/\(id)/generate-matches")
     }
 
-    static func getParticipations(_ competitionId: String) async throws -> [TeamParticipation] {
-        try await APIClient.shared.get("/competitions/\(competitionId)/participations")
+    static func completeCompetition(_ id: String) async throws -> Competition {
+        try await APIClient.shared.post("/competitions/\(id)/complete")
+    }
+
+    static func getParticipations(_ competitionId: String, limit: Int = 20, offset: Int = 0) async throws -> PaginatedResponse<TeamParticipation> {
+        try await APIClient.shared.get("/competitions/\(competitionId)/participations?limit=\(limit)&offset=\(offset)")
     }
 
     static func inviteTeam(competitionId: String, teamId: String) async throws -> TeamParticipation {
@@ -68,6 +72,14 @@ enum CompetitionService {
             let accept: Bool
         }
         return try await APIClient.shared.post("/competitions/\(competitionId)/invitations/\(teamId)/respond", body: Body(accept: accept))
+    }
+
+    static func withdrawInvitation(competitionId: String, teamId: String) async throws {
+        try await APIClient.shared.delete("/competitions/\(competitionId)/invitations/\(teamId)")
+    }
+
+    static func removeTeam(competitionId: String, teamId: String) async throws {
+        try await APIClient.shared.delete("/competitions/\(competitionId)/teams/\(teamId)")
     }
 
     static func getCompetitionInvitations() async throws -> [CompetitionInvitation] {

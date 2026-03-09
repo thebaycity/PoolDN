@@ -13,7 +13,14 @@ matches.use('*', authMiddleware);
 // Get matches for a competition
 matches.get('/competitions/:competitionId/matches', async (c) => {
   const services = createServices(c);
-  const results = await matchService.getCompetitionMatches(services, c.req.param('competitionId'));
+  const limit = Math.min(Number(c.req.query('limit') ?? '30'), 100);
+  const offset = Number(c.req.query('offset') ?? '0');
+  const results = await matchService.getCompetitionMatches(
+    services,
+    c.req.param('competitionId'),
+    limit,
+    offset
+  );
   return c.json(results);
 });
 

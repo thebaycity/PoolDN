@@ -2,8 +2,16 @@ import Foundation
 
 @Observable
 class TeamListViewModel {
+    // Data
     var myTeams: [Team] = []
     var allTeams: [Team] = []
+
+    // Search
+    var searchQuery = ""
+    var searchResults: [Team] = []
+    var isSearching = false
+
+    // Pagination
     var isLoading = false
     var isLoadingMore = false
     var hasMore = false
@@ -11,6 +19,36 @@ class TeamListViewModel {
 
     private var offset = 0
     private let pageSize = 20
+    private var searchTask: Task<Void, Never>?
+
+    func onQueryChanged(_ query: String) {
+        searchQuery = query
+        searchTask?.cancel()
+
+        guard query.trimmingCharacters(in: CharacterSet.whitespaces).count >= 2 else {
+            searchResults = []
+            isSearching = false
+            return
+        }
+        isSearching = true
+        searchTask = Task {
+            try? await Task.sleep(nanoseconds: 280_000_000)
+            guard !Task.isCancelled else { return }
+            await performSearch(query: query)
+        }
+    }
+
+    private func performSearch(query: String) async {
+        do {
+            let results = try await TeamService.searchTeams(query: query)
+            guard !Task.isCancelled else { return }
+            searchResults = results
+            isSearching = false
+        } catch {
+            guard !Task.isCancelled else { return }
+            isSearching = false
+        }
+    }
 
     func load(playerId: String) async {
         isLoading = true
@@ -19,7 +57,6 @@ class TeamListViewModel {
         do {
             async let fetchMy = TeamService.getPlayerTeams(playerId: playerId)
             async let fetchAll = TeamService.listTeams(limit: pageSize, offset: 0)
-
             let (my, allResponse) = try await (fetchMy, fetchAll)
             myTeams = my
             allTeams = allResponse.data
@@ -44,5 +81,12 @@ class TeamListViewModel {
         } catch {
             isLoadingMore = false
         }
+    }
+
+    func clearSearch() {
+        searchTask?.cancel()
+        searchQuery = ""
+        searchResults = []
+        isSearching = false
     }
 }

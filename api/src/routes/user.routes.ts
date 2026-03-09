@@ -10,6 +10,17 @@ const userRoutes = new Hono<Env>();
 
 userRoutes.use('*', authMiddleware);
 
+userRoutes.get('/search', async (c) => {
+  const q = c.req.query('q') ?? '';
+  const role = c.req.query('role');
+  const limit = Math.min(Number(c.req.query('limit') ?? '30'), 100);
+  // require at least 1 char OR a role filter for browse mode
+  if (q.trim().length === 0 && !role) return c.json([]);
+  const services = createServices(c);
+  const results = await userService.searchUsers(services, q, limit, c.get('userId'), role);
+  return c.json(results);
+});
+
 userRoutes.get('/:id', async (c) => {
   const services = createServices(c);
   const user = await userService.getUser(services, c.req.param('id'));

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { baseEntitySchema } from './base';
 
-export const participationStatus = z.enum(['pending', 'accepted', 'rejected']);
+export const participationStatus = z.enum(['pending', 'accepted', 'rejected', 'invited', 'declined', 'removed']);
 export type ParticipationStatus = z.infer<typeof participationStatus>;
 
 export const rosterPlayerSchema = z.object({

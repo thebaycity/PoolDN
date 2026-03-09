@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { eq, desc, sql } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { Services } from '../utils/helpers';
 import { competitions, teams, matches, notifications, users } from '../db/schema';
@@ -10,9 +10,25 @@ function parseSubmission(raw: string | null | undefined): MatchSubmission | null
   try { return JSON.parse(raw); } catch { return null; }
 }
 
-export async function getCompetitionMatches(services: Services, competitionId: string) {
+export async function getCompetitionMatches(
+  services: Services,
+  competitionId: string,
+  limit = 30,
+  offset = 0
+) {
   const { db } = services;
-  return db.select().from(matches).where(eq(matches.competitionId, competitionId)).all();
+  const data = await db.select().from(matches)
+    .where(eq(matches.competitionId, competitionId))
+    .orderBy(desc(matches.scheduledDate), desc(matches.round))
+    .limit(limit)
+    .offset(offset)
+    .all();
+  const totalResult = await db.select({ value: sql<number>`count(*)` })
+    .from(matches)
+    .where(eq(matches.competitionId, competitionId))
+    .get();
+  const total = totalResult?.value ?? 0;
+  return { data, total, hasMore: offset + limit < total };
 }
 
 export async function getMatch(services: Services, id: string) {

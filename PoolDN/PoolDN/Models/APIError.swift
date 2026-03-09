@@ -10,6 +10,10 @@ struct ValidationError: Codable {
     let path: [String]?
 }
 
+struct MessageResponse: Decodable {
+    let message: String
+}
+
 enum APIError: LocalizedError {
     case invalidURL
     case unauthorized

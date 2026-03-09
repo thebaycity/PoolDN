@@ -83,6 +83,38 @@ participations.post(
   }
 );
 
+// Withdraw invitation (organizer only)
+participations.delete(
+  '/competitions/:competitionId/invitations/:teamId',
+  requireRole('organizer', 'admin'),
+  async (c) => {
+    const services = createServices(c);
+    await participationService.withdrawInvitation(
+      services,
+      c.req.param('competitionId'),
+      c.req.param('teamId'),
+      c.get('userId')
+    );
+    return c.json({ message: 'Invitation withdrawn' });
+  }
+);
+
+// Remove team from competition (organizer only)
+participations.delete(
+  '/competitions/:competitionId/teams/:teamId',
+  requireRole('organizer', 'admin'),
+  async (c) => {
+    const services = createServices(c);
+    await participationService.removeTeam(
+      services,
+      c.req.param('competitionId'),
+      c.req.param('teamId'),
+      c.get('userId')
+    );
+    return c.json({ message: 'Team removed' });
+  }
+);
+
 // Get competition invitations for current user's teams
 participations.get('/competition-invitations', async (c) => {
   const services = createServices(c);
@@ -93,7 +125,14 @@ participations.get('/competition-invitations', async (c) => {
 // List participations for a competition
 participations.get('/competitions/:competitionId/participations', async (c) => {
   const services = createServices(c);
-  const apps = await participationService.getCompetitionParticipations(services, c.req.param('competitionId'));
+  const limit = Math.min(Number(c.req.query('limit') ?? '20'), 100);
+  const offset = Number(c.req.query('offset') ?? '0');
+  const apps = await participationService.getCompetitionParticipations(
+    services,
+    c.req.param('competitionId'),
+    limit,
+    offset
+  );
   return c.json(apps);
 });
 

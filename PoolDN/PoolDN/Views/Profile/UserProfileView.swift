@@ -10,7 +10,11 @@ struct UserProfileView: View {
                 VStack(spacing: 16) {
                     // Avatar & Name
                     VStack(spacing: 14) {
-                        avatarView(user: user, size: 88)
+                        AvatarView(
+                            avatarUrl: user.avatarUrl,
+                            name: user.name,
+                            size: 88
+                        )
 
                         VStack(spacing: 4) {
                             Text(user.name)
@@ -34,13 +38,13 @@ struct UserProfileView: View {
                                 .sectionHeader()
 
                             HStack(spacing: 0) {
-                                statBox("Matches", "\(stats.totalMatches)", icon: "sportscourt")
+                                statBox("Matches", "\(stats.totalMatches)", icon: "sportscourt", color: Color.theme.textPrimary)
                                 divider
                                 statBox("Wins", "\(stats.wins)", icon: "trophy.fill", color: Color.theme.accentGreen)
                                 divider
                                 statBox("Losses", "\(stats.losses)", icon: "xmark.circle", color: Color.theme.accentRed)
                                 divider
-                                statBox("Teams", "\(stats.teamsCount)", icon: "person.3")
+                                statBox("Teams", "\(stats.teamsCount)", icon: "person.3", color: Color.theme.accent)
                             }
                         }
                         .cardStyle()
@@ -102,50 +106,13 @@ struct UserProfileView: View {
         }
     }
 
-    @ViewBuilder
-    private func avatarView(user: User, size: CGFloat) -> some View {
-        if let avatarUrl = user.avatarUrl,
-           let url = URL(string: "\(AppConfig.apiBaseURL.replacingOccurrences(of: "/api", with: ""))\(avatarUrl)") {
-            AsyncImage(url: url) { phase in
-                switch phase {
-                case .success(let image):
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(width: size, height: size)
-                        .clipShape(Circle())
-                case .failure:
-                    initialsCircle(name: user.name, size: size)
-                default:
-                    Circle()
-                        .fill(Color.theme.accent.opacity(0.15))
-                        .frame(width: size, height: size)
-                }
-            }
-        } else {
-            initialsCircle(name: user.name, size: size)
-        }
-    }
-
-    private func initialsCircle(name: String, size: CGFloat) -> some View {
-        ZStack {
-            Circle()
-                .fill(Color.theme.accent.opacity(0.15))
-                .frame(width: size, height: size)
-            Text(String(name.prefix(2)).uppercased())
-                .font(.title)
-                .fontWeight(.bold)
-                .foregroundColor(Color.theme.accent)
-        }
-    }
-
     private var divider: some View {
         Rectangle()
             .fill(Color.theme.separator)
             .frame(width: 1, height: 32)
     }
 
-    private func statBox(_ label: String, _ value: String, icon: String, color: Color = Color.theme.textPrimary) -> some View {
+    private func statBox(_ label: String, _ value: String, icon: String, color: Color) -> some View {
         VStack(spacing: 6) {
             Image(systemName: icon)
                 .font(.caption)

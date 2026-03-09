@@ -30,6 +30,17 @@ enum AuthService {
         try await APIClient.shared.get("/auth/me")
     }
 
+    static func changePassword(currentPassword: String, newPassword: String) async throws {
+        struct Body: Encodable {
+            let currentPassword: String
+            let newPassword: String
+        }
+        let _: MessageResponse = try await APIClient.shared.post(
+            "/auth/change-password",
+            body: Body(currentPassword: currentPassword, newPassword: newPassword)
+        )
+    }
+
     static func logout() {
         KeychainHelper.delete(forKey: AppConfig.tokenKey)
     }

@@ -4,12 +4,17 @@ struct CompetitionTeamsTab: View {
     let competition: Competition
     let participations: [TeamParticipation]
     let isOrganizer: Bool
+    let hasMoreParticipations: Bool
+    let isLoadingMoreParticipations: Bool
     @Bindable var viewModel: CompetitionDetailViewModel
     @Bindable var appState: AppState
+    var onLoadMoreParticipations: (() async -> Void)? = nil
     @State private var showApplySheet = false
     @State private var showInviteSheet = false
-    @State private var allTeams: [Team] = []
     @State private var myTeams: [Team] = []
+    @State private var selectedTab = 0
+    @State private var teamToWithdraw: TeamParticipation?
+    @State private var teamToRemove: TeamParticipation?
 
     var acceptedTeams: [TeamParticipation] {
         participations.filter { $0.status == "accepted" }
@@ -28,6 +33,29 @@ struct CompetitionTeamsTab: View {
         return invitedTeams.filter { invite in
             myTeams.contains(where: { $0.id == invite.teamId && $0.captainId == userId })
         }
+    }
+
+    private var tabOptions: [(String, Int)] {
+        var tabs: [(String, Int)] = [("All", 0), ("Accepted", 1)]
+        if isOrganizer {
+            if !invitedTeams.isEmpty { tabs.append(("Invited", 2)) }
+            if !pendingTeams.isEmpty { tabs.append(("Pending", 3)) }
+        } else if !myInvitations.isEmpty {
+            tabs.append(("Invited", 2))
+        }
+        return tabs
+    }
+
+    private var showInvitedSection: Bool {
+        selectedTab == 0 || selectedTab == 2
+    }
+
+    private var showPendingSection: Bool {
+        selectedTab == 0 || selectedTab == 3
+    }
+
+    private var showAcceptedSection: Bool {
+        selectedTab == 0 || selectedTab == 1
     }
 
     var body: some View {
@@ -62,10 +90,7 @@ struct CompetitionTeamsTab: View {
                 // Invite team button (organizer)
                 if isOrganizer && competition.status == .upcoming {
                     Button {
-                        Task {
-                            allTeams = try await TeamService.listTeams(limit: 100).data
-                            showInviteSheet = true
-                        }
+                        showInviteSheet = true
                     } label: {
                         HStack {
                             Image(systemName: "envelope.badge.person.crop")
@@ -93,8 +118,18 @@ struct CompetitionTeamsTab: View {
                     }
                 }
 
+                // Segmented picker
+                if tabOptions.count > 2 {
+                    Picker("Filter", selection: $selectedTab) {
+                        ForEach(tabOptions, id: \.1) { tab in
+                            Text(tab.0).tag(tab.1)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                }
+
                 // Competition invitations for my teams (captain view)
-                if !isOrganizer && !myInvitations.isEmpty {
+                if showInvitedSection && !isOrganizer && !myInvitations.isEmpty {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Your Invitations")
                             .sectionHeader()
@@ -167,50 +202,57 @@ struct CompetitionTeamsTab: View {
                 }
 
                 // Invited teams (organizer view)
-                if isOrganizer && !invitedTeams.isEmpty {
+                if showInvitedSection && isOrganizer && !invitedTeams.isEmpty {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Invited")
                             .sectionHeader()
 
                         ForEach(invitedTeams) { invite in
-                            NavigationLink {
-                                TeamDetailView(teamId: invite.teamId, appState: appState)
-                            } label: {
-                                HStack(spacing: 12) {
-                                    ZStack {
-                                        Circle()
-                                            .fill(Color.theme.accent.opacity(0.15))
-                                            .frame(width: 40, height: 40)
-                                        Text(String(invite.teamName.prefix(2)).uppercased())
-                                            .font(.caption)
-                                            .fontWeight(.bold)
-                                            .foregroundColor(Color.theme.accent)
-                                    }
-
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        Text(invite.teamName)
-                                            .font(.subheadline)
-                                            .fontWeight(.medium)
-                                            .foregroundColor(Color.theme.textPrimary)
-                                        if let roster = invite.roster {
-                                            Text("\(roster.count) members")
+                            HStack(spacing: 12) {
+                                NavigationLink {
+                                    TeamDetailView(teamId: invite.teamId, appState: appState)
+                                } label: {
+                                    HStack(spacing: 12) {
+                                        ZStack {
+                                            Circle()
+                                                .fill(Color.theme.accent.opacity(0.15))
+                                                .frame(width: 40, height: 40)
+                                            Text(String(invite.teamName.prefix(2)).uppercased())
                                                 .font(.caption)
-                                                .foregroundColor(Color.theme.textSecondary)
+                                                .fontWeight(.bold)
+                                                .foregroundColor(Color.theme.accent)
+                                        }
+
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text(invite.teamName)
+                                                .font(.subheadline)
+                                                .fontWeight(.medium)
+                                                .foregroundColor(Color.theme.textPrimary)
+                                            if let roster = invite.roster {
+                                                Text("\(roster.count) members")
+                                                    .font(.caption)
+                                                    .foregroundColor(Color.theme.textSecondary)
+                                            }
                                         }
                                     }
+                                }
+                                .buttonStyle(.plain)
 
-                                    Spacer()
+                                Spacer()
 
-                                    Text("Awaiting response")
+                                Button {
+                                    teamToWithdraw = invite
+                                } label: {
+                                    Text("Withdraw")
                                         .font(.caption)
-                                        .foregroundColor(Color.theme.textSecondary)
-
-                                    Image(systemName: "chevron.right")
-                                        .font(.caption2)
-                                        .foregroundColor(Color.theme.textTertiary)
+                                        .fontWeight(.semibold)
+                                        .foregroundColor(Color.theme.accentRed)
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 6)
+                                        .background(Color.theme.accentRed.opacity(0.12))
+                                        .clipShape(Capsule())
                                 }
                             }
-                            .buttonStyle(.plain)
                             .padding(12)
                             .background(Color.theme.surface)
                             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
@@ -223,7 +265,7 @@ struct CompetitionTeamsTab: View {
                 }
 
                 // Pending Applications
-                if isOrganizer && !pendingTeams.isEmpty {
+                if showPendingSection && isOrganizer && !pendingTeams.isEmpty {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Pending Applications")
                             .sectionHeader()
@@ -289,60 +331,65 @@ struct CompetitionTeamsTab: View {
                 }
 
                 // Accepted Teams
-                VStack(alignment: .leading, spacing: 12) {
-                    HStack {
-                        Text("Accepted")
-                            .sectionHeader()
-                        Spacer()
-                        Text("\(acceptedTeams.count)")
-                            .font(.caption)
-                            .fontWeight(.bold)
-                            .foregroundColor(Color.theme.accent)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 3)
-                            .background(Color.theme.accent.opacity(0.12))
-                            .clipShape(Capsule())
-                    }
+                if showAcceptedSection {
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack {
+                            Text("Accepted")
+                                .sectionHeader()
+                            Spacer()
+                            Text("\(acceptedTeams.count)")
+                                .font(.caption)
+                                .fontWeight(.bold)
+                                .foregroundColor(Color.theme.accent)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 3)
+                                .background(Color.theme.accent.opacity(0.12))
+                                .clipShape(Capsule())
+                        }
 
-                    if acceptedTeams.isEmpty {
-                        Text("No teams accepted yet")
-                            .font(.subheadline)
-                            .foregroundColor(Color.theme.textSecondary)
-                            .padding(.vertical, 8)
-                    } else {
-                        ForEach(acceptedTeams) { team in
-                            NavigationLink {
-                                TeamDetailView(teamId: team.teamId, appState: appState)
-                            } label: {
+                        if acceptedTeams.isEmpty {
+                            Text("No teams accepted yet")
+                                .font(.subheadline)
+                                .foregroundColor(Color.theme.textSecondary)
+                                .padding(.vertical, 8)
+                        } else {
+                            ForEach(acceptedTeams) { team in
                                 HStack(spacing: 12) {
-                                    ZStack {
-                                        Circle()
-                                            .fill(Color.theme.accent.opacity(0.15))
-                                            .frame(width: 40, height: 40)
-                                        Text(String(team.teamName.prefix(2)).uppercased())
-                                            .font(.caption)
-                                            .fontWeight(.bold)
-                                            .foregroundColor(Color.theme.accent)
-                                    }
-
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        Text(team.teamName)
-                                            .font(.subheadline)
-                                            .fontWeight(.medium)
-                                            .foregroundColor(Color.theme.textPrimary)
-                                        HStack(spacing: 8) {
-                                            if let roster = team.roster {
-                                                Label("\(roster.count)", systemImage: "person.2")
+                                    NavigationLink {
+                                        TeamDetailView(teamId: team.teamId, appState: appState)
+                                    } label: {
+                                        HStack(spacing: 12) {
+                                            ZStack {
+                                                Circle()
+                                                    .fill(Color.theme.accent.opacity(0.15))
+                                                    .frame(width: 40, height: 40)
+                                                Text(String(team.teamName.prefix(2)).uppercased())
                                                     .font(.caption)
-                                                    .foregroundColor(Color.theme.textSecondary)
+                                                    .fontWeight(.bold)
+                                                    .foregroundColor(Color.theme.accent)
                                             }
-                                            if let venue = team.homeVenue {
-                                                Label(venue, systemImage: "building.2")
-                                                    .font(.caption)
-                                                    .foregroundColor(Color.theme.textSecondary)
+
+                                            VStack(alignment: .leading, spacing: 2) {
+                                                Text(team.teamName)
+                                                    .font(.subheadline)
+                                                    .fontWeight(.medium)
+                                                    .foregroundColor(Color.theme.textPrimary)
+                                                HStack(spacing: 8) {
+                                                    if let roster = team.roster {
+                                                        Label("\(roster.count)", systemImage: "person.2")
+                                                            .font(.caption)
+                                                            .foregroundColor(Color.theme.textSecondary)
+                                                    }
+                                                    if let venue = team.homeVenue {
+                                                        Label(venue, systemImage: "building.2")
+                                                            .font(.caption)
+                                                            .foregroundColor(Color.theme.textSecondary)
+                                                    }
+                                                }
                                             }
                                         }
                                     }
+                                    .buttonStyle(.plain)
 
                                     Spacer()
 
@@ -350,21 +397,63 @@ struct CompetitionTeamsTab: View {
                                         .foregroundColor(Color.theme.accentGreen)
                                         .font(.subheadline)
 
-                                    Image(systemName: "chevron.right")
-                                        .font(.caption2)
-                                        .foregroundColor(Color.theme.textTertiary)
+                                    if isOrganizer && (competition.status == .upcoming || competition.status == .active) {
+                                        Button {
+                                            teamToRemove = team
+                                        } label: {
+                                            Image(systemName: "xmark.circle.fill")
+                                                .font(.title3)
+                                                .foregroundColor(Color.theme.accentRed)
+                                        }
+                                    } else {
+                                        Image(systemName: "chevron.right")
+                                            .font(.caption2)
+                                            .foregroundColor(Color.theme.textTertiary)
+                                    }
+                                }
+                                .padding(12)
+                                .background(Color.theme.surface)
+                                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                        .strokeBorder(Color.theme.border, lineWidth: 0.5)
+                                )
+                                .onAppear {
+                                    if team.id == acceptedTeams.last?.id, hasMoreParticipations {
+                                        Task { await onLoadMoreParticipations?() }
+                                    }
                                 }
                             }
-                            .buttonStyle(.plain)
-                            .padding(12)
-                            .background(Color.theme.surface)
-                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                    .strokeBorder(Color.theme.border, lineWidth: 0.5)
-                            )
                         }
                     }
+                }
+
+                // Participations load-more footer
+                if isLoadingMoreParticipations {
+                    HStack(spacing: 10) {
+                        ProgressView().scaleEffect(0.85).tint(Color.theme.accent)
+                        Text("Loading more teams...")
+                            .font(.caption)
+                            .foregroundColor(Color.theme.textSecondary)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 8)
+                } else if hasMoreParticipations {
+                    Button {
+                        Task { await onLoadMoreParticipations?() }
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "arrow.down.circle")
+                            Text("Load More Teams")
+                        }
+                        .font(.subheadline.weight(.medium))
+                        .foregroundColor(Color.theme.accent)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(Color.theme.surfaceLight)
+                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
                 }
             }
             .padding()
@@ -420,56 +509,51 @@ struct CompetitionTeamsTab: View {
             }
         }
         .sheet(isPresented: $showInviteSheet) {
-            NavigationStack {
-                List {
-                    ForEach(allTeams.filter { team in
-                        !participations.contains(where: { $0.teamId == team.id })
-                    }) { team in
-                        Button {
-                            Task {
-                                await viewModel.inviteTeam(teamId: team.id)
-                                showInviteSheet = false
-                            }
-                        } label: {
-                            HStack(spacing: 12) {
-                                ZStack {
-                                    Circle()
-                                        .fill(Color.theme.accent.opacity(0.15))
-                                        .frame(width: 36, height: 36)
-                                    Text(String(team.name.prefix(2)).uppercased())
-                                        .font(.caption2)
-                                        .fontWeight(.bold)
-                                        .foregroundColor(Color.theme.accent)
-                                }
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(team.name)
-                                        .foregroundColor(Color.theme.textPrimary)
-                                    HStack(spacing: 8) {
-                                        Text("\(team.members.count) members")
-                                            .font(.caption)
-                                            .foregroundColor(Color.theme.textSecondary)
-                                        if let city = team.city {
-                                            Label(city, systemImage: "mappin")
-                                                .font(.caption)
-                                                .foregroundColor(Color.theme.textSecondary)
-                                        }
-                                    }
-                                }
-                                Spacer()
-                            }
-                        }
-                    }
-                }
-                .listStyle(.insetGrouped)
-                .navigationTitle("Invite Team")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("Cancel") { showInviteSheet = false }
-                    }
+            InviteTeamSheet(
+                competition: competition,
+                participations: participations,
+                onInvite: { teamId in
+                    await viewModel.inviteTeam(teamId: teamId)
+                },
+                onDismiss: { showInviteSheet = false }
+            )
+            .presentationDetents([.large])
+        }
+        .confirmationDialog(
+            "Withdraw Invitation",
+            isPresented: Binding(
+                get: { teamToWithdraw != nil },
+                set: { if !$0 { teamToWithdraw = nil } }
+            ),
+            titleVisibility: .visible
+        ) {
+            if let team = teamToWithdraw {
+                Button("Withdraw Invitation", role: .destructive) {
+                    Task { await viewModel.withdrawInvitation(teamId: team.teamId) }
                 }
             }
-            .presentationDetents([.medium])
+        } message: {
+            if let team = teamToWithdraw {
+                Text("Withdraw the invitation for \(team.teamName)? They will be able to be invited again.")
+            }
+        }
+        .confirmationDialog(
+            "Remove Team",
+            isPresented: Binding(
+                get: { teamToRemove != nil },
+                set: { if !$0 { teamToRemove = nil } }
+            ),
+            titleVisibility: .visible
+        ) {
+            if let team = teamToRemove {
+                Button("Remove Team", role: .destructive) {
+                    Task { await viewModel.removeTeam(teamId: team.teamId) }
+                }
+            }
+        } message: {
+            if let team = teamToRemove {
+                Text("Remove \(team.teamName) from this competition? This action cannot be undone.")
+            }
         }
     }
 }

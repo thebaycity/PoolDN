@@ -5,6 +5,11 @@ enum TeamService {
         try await APIClient.shared.get("/teams?limit=\(limit)&offset=\(offset)")
     }
 
+    static func searchTeams(query: String) async throws -> [Team] {
+        let encoded = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? query
+        return try await APIClient.shared.get("/teams/search?q=\(encoded)")
+    }
+
     static func getTeam(_ id: String) async throws -> Team {
         try await APIClient.shared.get("/teams/\(id)")
     }

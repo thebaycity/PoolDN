@@ -25,6 +25,16 @@ teams.get('/', async (c) => {
   return c.json(allTeams);
 });
 
+teams.get('/search', async (c) => {
+  const q = c.req.query('q') ?? '';
+  if (q.trim().length < 2) return c.json([]);
+  const city = c.req.query('city');
+  const limit = Math.min(Number(c.req.query('limit') ?? '30'), 100);
+  const services = createServices(c);
+  const results = await teamService.searchTeams(services, q, city, limit);
+  return c.json(results);
+});
+
 teams.get('/:id', async (c) => {
   const services = createServices(c);
   const team = await teamService.getTeam(services, c.req.param('id'));

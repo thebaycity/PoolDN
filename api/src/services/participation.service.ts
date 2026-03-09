@@ -1,4 +1,4 @@
-import { eq, and } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { Services } from '../utils/helpers';
 import { competitions, teams, teamMembers, notifications } from '../db/schema';
@@ -97,11 +97,24 @@ export async function handleApplication(
   return updated;
 }
 
-export async function getCompetitionParticipations(services: Services, competitionId: string) {
+export async function getCompetitionParticipations(
+  services: Services,
+  competitionId: string,
+  limit = 20,
+  offset = 0
+) {
   const { db } = services;
-  return db.select().from(teamMembers)
+  const data = await db.select().from(teamMembers)
     .where(eq(teamMembers.competitionId, competitionId))
+    .limit(limit)
+    .offset(offset)
     .all();
+  const totalResult = await db.select({ value: sql<number>`count(*)` })
+    .from(teamMembers)
+    .where(eq(teamMembers.competitionId, competitionId))
+    .get();
+  const total = totalResult?.value ?? 0;
+  return { data, total, hasMore: offset + limit < total };
 }
 
 export async function getAcceptedTeams(services: Services, competitionId: string) {
@@ -176,6 +189,95 @@ export async function getTeamCompetitionInvitations(services: Services, userId: 
   }
 
   return invitations;
+}
+
+export async function withdrawInvitation(
+  services: Services,
+  competitionId: string,
+  teamId: string,
+  userId: string
+) {
+  const { db } = services;
+  const comp = await db.select().from(competitions).where(eq(competitions.id, competitionId)).get();
+  if (!comp) throw AppError.notFound('Competition not found');
+  if (comp.organizerId !== userId) throw AppError.forbidden('Only competition organizer can withdraw invitations');
+
+  const apps = await db.select().from(teamMembers)
+    .where(and(eq(teamMembers.competitionId, competitionId), eq(teamMembers.teamId, teamId)))
+    .all();
+  if (apps.length === 0) throw AppError.notFound('Invitation not found');
+
+  const app = apps[0];
+  if (app.status !== 'invited') throw AppError.badRequest('Team is not in invited status');
+
+  await db.delete(teamMembers).where(eq(teamMembers.id, app.id));
+
+  // Notify team captain
+  const team = await db.select().from(teams).where(eq(teams.id, teamId)).get();
+  if (team) {
+    const now = Date.now();
+    await db.insert(notifications).values({
+      id: nanoid(),
+      userId: team.captainId,
+      type: 'invitation_withdrawn',
+      title: 'Invitation Withdrawn',
+      message: `The invitation for ${team.name} to ${comp.name} has been withdrawn`,
+      read: false,
+      referenceId: competitionId,
+      referenceType: 'competition',
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
+}
+
+export async function removeTeam(
+  services: Services,
+  competitionId: string,
+  teamId: string,
+  userId: string
+) {
+  const { db } = services;
+  const comp = await db.select().from(competitions).where(eq(competitions.id, competitionId)).get();
+  if (!comp) throw AppError.notFound('Competition not found');
+  if (comp.organizerId !== userId) throw AppError.forbidden('Only competition organizer can remove teams');
+  if (comp.status === 'completed') throw AppError.badRequest('Cannot remove teams from a completed competition');
+
+  const apps = await db.select().from(teamMembers)
+    .where(and(eq(teamMembers.competitionId, competitionId), eq(teamMembers.teamId, teamId)))
+    .all();
+  if (apps.length === 0) throw AppError.notFound('Team not found in competition');
+
+  const app = apps[0];
+  if (app.status !== 'accepted') throw AppError.badRequest('Team is not in accepted status');
+
+  if (comp.status === 'upcoming') {
+    // No matches yet — hard delete
+    await db.delete(teamMembers).where(eq(teamMembers.id, app.id));
+  } else {
+    // Active — soft delete to preserve match history
+    await db.update(teamMembers)
+      .set({ status: 'removed', updatedAt: Date.now() })
+      .where(eq(teamMembers.id, app.id));
+  }
+
+  // Notify team captain
+  const team = await db.select().from(teams).where(eq(teams.id, teamId)).get();
+  if (team) {
+    const now = Date.now();
+    await db.insert(notifications).values({
+      id: nanoid(),
+      userId: team.captainId,
+      type: 'team_removed',
+      title: 'Team Removed',
+      message: `${team.name} has been removed from ${comp.name}`,
+      read: false,
+      referenceId: competitionId,
+      referenceType: 'competition',
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
 }
 
 export async function inviteTeamToCompetition(

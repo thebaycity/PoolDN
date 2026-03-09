@@ -14,6 +14,8 @@ export const notificationType = z.enum([
   'score_submitted',
   'score_disputed',
   'score_confirmed',
+  'invitation_withdrawn',
+  'team_removed',
 ]);
 export type NotificationType = z.infer<typeof notificationType>;
 

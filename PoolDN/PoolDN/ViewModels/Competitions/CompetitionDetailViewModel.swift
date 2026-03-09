@@ -10,15 +10,35 @@ class CompetitionDetailViewModel {
     var errorMessage: String?
     var actionMessage: String?
 
+    // Matches pagination
+    var isLoadingMoreMatches = false
+    var hasMoreMatches = false
+    private var matchOffset = 0
+    private let matchPageSize = 20
+
+    // Participations pagination
+    var isLoadingMoreParticipations = false
+    var hasMoreParticipations = false
+    private var participationOffset = 0
+    private let participationPageSize = 20
+
     func load(_ id: String) async {
         isLoading = true
         errorMessage = nil
+        matchOffset = 0
+        participationOffset = 0
         do {
             competition = try await CompetitionService.getCompetition(id)
-            participations = try await CompetitionService.getParticipations(id)
+            let participationPage = try await CompetitionService.getParticipations(id, limit: participationPageSize, offset: 0)
+            participations = participationPage.data
+            hasMoreParticipations = participationPage.hasMore
+            participationOffset = participationPage.data.count
 
             if competition?.status == .active || competition?.status == .completed {
-                matches = try await MatchService.getCompetitionMatches(id)
+                let matchPage = try await MatchService.getCompetitionMatches(id, limit: matchPageSize, offset: 0)
+                matches = matchPage.data
+                hasMoreMatches = matchPage.hasMore
+                matchOffset = matchPage.data.count
                 standings = try await StandingsService.getStandings(id)
             }
             isLoading = false
@@ -26,6 +46,34 @@ class CompetitionDetailViewModel {
             isLoading = false
             errorMessage = error.localizedDescription
         }
+    }
+
+    func loadMoreMatches() async {
+        guard !isLoadingMoreMatches, hasMoreMatches, let id = competition?.id else { return }
+        isLoadingMoreMatches = true
+        do {
+            let page = try await MatchService.getCompetitionMatches(id, limit: matchPageSize, offset: matchOffset)
+            matches.append(contentsOf: page.data)
+            hasMoreMatches = page.hasMore
+            matchOffset += page.data.count
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+        isLoadingMoreMatches = false
+    }
+
+    func loadMoreParticipations() async {
+        guard !isLoadingMoreParticipations, hasMoreParticipations, let id = competition?.id else { return }
+        isLoadingMoreParticipations = true
+        do {
+            let page = try await CompetitionService.getParticipations(id, limit: participationPageSize, offset: participationOffset)
+            participations.append(contentsOf: page.data)
+            hasMoreParticipations = page.hasMore
+            participationOffset += page.data.count
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+        isLoadingMoreParticipations = false
     }
 
     func publish() async {
@@ -76,6 +124,38 @@ class CompetitionDetailViewModel {
             _ = try await CompetitionService.inviteTeam(competitionId: id, teamId: teamId)
             actionMessage = "Team invited!"
             await load(id)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func withdrawInvitation(teamId: String) async {
+        guard let id = competition?.id else { return }
+        do {
+            try await CompetitionService.withdrawInvitation(competitionId: id, teamId: teamId)
+            actionMessage = "Invitation withdrawn"
+            await load(id)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func removeTeam(teamId: String) async {
+        guard let id = competition?.id else { return }
+        do {
+            try await CompetitionService.removeTeam(competitionId: id, teamId: teamId)
+            actionMessage = "Team removed"
+            await load(id)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func completeCompetition() async {
+        guard let id = competition?.id else { return }
+        do {
+            competition = try await CompetitionService.completeCompetition(id)
+            actionMessage = "Competition completed!"
         } catch {
             errorMessage = error.localizedDescription
         }

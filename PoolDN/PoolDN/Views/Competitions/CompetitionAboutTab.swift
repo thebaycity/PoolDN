@@ -5,6 +5,7 @@ struct CompetitionAboutTab: View {
     let isOrganizer: Bool
     @Bindable var viewModel: CompetitionDetailViewModel
     @Bindable var appState: AppState
+    @State private var showCompleteConfirmation = false
 
     var body: some View {
         ScrollView {
@@ -118,18 +119,71 @@ struct CompetitionAboutTab: View {
                     .cardStyle()
                 }
 
-                // Organizer Actions
-                if isOrganizer && competition.status == .draft {
-                    Button {
-                        Task { await viewModel.publish() }
-                    } label: {
-                        Text("Publish Competition")
-                            .primaryButton()
-                    }
+                // Organizer Management
+                if isOrganizer {
+                    organizerManagementSection
                 }
             }
             .padding()
         }
+    }
+
+    @ViewBuilder
+    private var organizerManagementSection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Management")
+                .font(.headline)
+                .foregroundColor(Color.theme.textPrimary)
+
+            Divider().overlay(Color.theme.separator)
+
+            switch competition.status {
+            case .draft:
+                Label("This competition is in draft. Publish it to start accepting teams.", systemImage: "doc.text")
+                    .font(.subheadline)
+                    .foregroundColor(Color.theme.textSecondary)
+
+                Button {
+                    Task { await viewModel.publish() }
+                } label: {
+                    Text("Publish Competition")
+                        .primaryButton()
+                }
+
+            case .upcoming:
+                Label("Open for registration. Manage teams from the Teams tab.", systemImage: "person.3")
+                    .font(.subheadline)
+                    .foregroundColor(Color.theme.textSecondary)
+
+            case .active:
+                Label("Competition is in progress. Complete it when all matches are finished.", systemImage: "sportscourt")
+                    .font(.subheadline)
+                    .foregroundColor(Color.theme.textSecondary)
+
+                Button {
+                    showCompleteConfirmation = true
+                } label: {
+                    Text("Complete Competition")
+                        .primaryButton()
+                }
+                .confirmationDialog("Complete Competition?", isPresented: $showCompleteConfirmation, titleVisibility: .visible) {
+                    Button("Complete", role: .destructive) {
+                        Task { await viewModel.completeCompetition() }
+                    }
+                } message: {
+                    Text("This will mark the competition as completed. This action cannot be undone.")
+                }
+
+            case .completed:
+                Label("This competition has been completed.", systemImage: "trophy")
+                    .font(.subheadline)
+                    .foregroundColor(Color.theme.accent)
+
+            default:
+                EmptyView()
+            }
+        }
+        .cardStyle()
     }
 
     private func infoRow(icon: String, label: String, value: String) -> some View {

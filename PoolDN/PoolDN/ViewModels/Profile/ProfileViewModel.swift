@@ -13,6 +13,16 @@ class ProfileViewModel {
     var editName = ""
     var editNickname = ""
 
+    // Change password fields
+    var currentPassword = ""
+    var newPassword = ""
+    var confirmPassword = ""
+    var isChangingPassword = false
+    var passwordErrorMessage: String?
+
+    /// Incremented after every successful avatar upload to bust AsyncImage cache
+    var avatarVersion: Int = 0
+
     func load(_ userId: String) async {
         isLoading = true
         do {
@@ -60,6 +70,7 @@ class ProfileViewModel {
         isUploading = true
         do {
             user = try await UserService.uploadAvatar(userId: userId, imageData: imageData)
+            avatarVersion += 1
             isUploading = false
             return true
         } catch {
@@ -67,5 +78,41 @@ class ProfileViewModel {
             errorMessage = error.localizedDescription
             return false
         }
+    }
+
+    func changePassword() async -> Bool {
+        guard newPassword == confirmPassword else {
+            passwordErrorMessage = "New passwords do not match"
+            return false
+        }
+        guard newPassword.count >= 6 else {
+            passwordErrorMessage = "New password must be at least 6 characters"
+            return false
+        }
+        isChangingPassword = true
+        passwordErrorMessage = nil
+        do {
+            try await AuthService.changePassword(
+                currentPassword: currentPassword,
+                newPassword: newPassword
+            )
+            // Clear fields on success
+            currentPassword = ""
+            newPassword = ""
+            confirmPassword = ""
+            isChangingPassword = false
+            return true
+        } catch {
+            isChangingPassword = false
+            passwordErrorMessage = error.localizedDescription
+            return false
+        }
+    }
+
+    func resetPasswordFields() {
+        currentPassword = ""
+        newPassword = ""
+        confirmPassword = ""
+        passwordErrorMessage = nil
     }
 }

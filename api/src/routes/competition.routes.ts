@@ -52,6 +52,12 @@ competitions.post('/:id/close-applications', async (c) => {
   return c.json(comp);
 });
 
+competitions.post('/:id/complete', async (c) => {
+  const services = createServices(c);
+  const comp = await competitionService.completeCompetition(services, c.req.param('id'), c.get('userId'));
+  return c.json(comp);
+});
+
 competitions.post('/:id/generate-matches', async (c) => {
   const services = createServices(c);
   const matches = await schedulingService.generateMatches(services, c.req.param('id'), c.get('userId'));

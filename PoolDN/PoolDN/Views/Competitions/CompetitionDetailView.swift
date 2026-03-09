@@ -69,14 +69,20 @@ struct CompetitionDetailView: View {
                         competition: comp,
                         participations: viewModel.participations,
                         isOrganizer: isOrganizer,
+                        hasMoreParticipations: viewModel.hasMoreParticipations,
+                        isLoadingMoreParticipations: viewModel.isLoadingMoreParticipations,
                         viewModel: viewModel,
-                        appState: appState
+                        appState: appState,
+                        onLoadMoreParticipations: { await viewModel.loadMoreParticipations() }
                     )
                 case 2:
                     CompetitionMatchesTab(
                         competitionId: comp.id,
                         matches: viewModel.matches,
-                        appState: appState
+                        hasMore: viewModel.hasMoreMatches,
+                        isLoadingMore: viewModel.isLoadingMoreMatches,
+                        appState: appState,
+                        onLoadMore: { await viewModel.loadMoreMatches() }
                     )
                 case 3:
                     StandingsView(

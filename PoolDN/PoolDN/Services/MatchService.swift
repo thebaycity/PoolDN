@@ -1,8 +1,8 @@
 import Foundation
 
 enum MatchService {
-    static func getCompetitionMatches(_ competitionId: String) async throws -> [Match] {
-        try await APIClient.shared.get("/competitions/\(competitionId)/matches")
+    static func getCompetitionMatches(_ competitionId: String, limit: Int = 30, offset: Int = 0) async throws -> PaginatedResponse<Match> {
+        try await APIClient.shared.get("/competitions/\(competitionId)/matches?limit=\(limit)&offset=\(offset)")
     }
 
     static func getMatch(_ id: String) async throws -> Match {

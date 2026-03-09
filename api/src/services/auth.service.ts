@@ -102,3 +102,24 @@ export async function getMe(services: Services, userId: string) {
   const { passwordHash, ...profile } = user;
   return profile;
 }
+
+export async function changePassword(
+  services: Services,
+  userId: string,
+  data: { currentPassword: string; newPassword: string }
+) {
+  const { db } = services;
+  const user = await db.select().from(users).where(eq(users.id, userId)).get();
+  if (!user) throw AppError.notFound('User not found');
+
+  const valid = await verifyPassword(data.currentPassword, user.passwordHash);
+  if (!valid) throw AppError.unauthorized('Current password is incorrect');
+
+  const newHash = await hashPassword(data.newPassword);
+  await db.update(users)
+    .set({ passwordHash: newHash, updatedAt: Date.now() })
+    .where(eq(users.id, userId));
+
+  return { message: 'Password updated successfully' };
+}
+

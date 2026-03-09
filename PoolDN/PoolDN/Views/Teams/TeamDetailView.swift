@@ -5,6 +5,8 @@ struct TeamDetailView: View {
     @Bindable var appState: AppState
     @State private var viewModel = TeamDetailViewModel()
     @State private var showInviteSheet = false
+    @State private var visibleMembersCount = 10
+    private let memberPageSize = 10
 
     var isCaptain: Bool {
         viewModel.team?.captainId == appState.currentUser?.id
@@ -86,25 +88,18 @@ struct TeamDetailView: View {
                             }
                         }
 
-                        ForEach(team.members, id: \.playerId) { member in
-                            NavigationLink(value: member.playerId) {
+                        ForEach(Array(team.members.prefix(visibleMembersCount)), id: \.playerId) { member in
+                            NavigationLink(value: member) {
                                 HStack(spacing: 12) {
-                                    if let avatarUrl = member.avatarUrl,
-                                       let url = URL(string: "\(AppConfig.apiBaseURL.replacingOccurrences(of: "/api", with: ""))\(avatarUrl)") {
-                                        AsyncImage(url: url) { phase in
-                                            switch phase {
-                                            case .success(let img):
-                                                img.resizable()
-                                                    .aspectRatio(contentMode: .fill)
-                                                    .frame(width: 40, height: 40)
-                                                    .clipShape(Circle())
-                                            default:
-                                                memberInitials(member)
-                                            }
-                                        }
-                                    } else {
-                                        memberInitials(member)
-                                    }
+                                    // Use shared AvatarView — handles cache-busting & initials fallback
+                                    AvatarView(
+                                        avatarUrl: member.avatarUrl,
+                                        name: member.name ?? member.playerId,
+                                        size: 40,
+                                        roleColor: member.role == "captain"
+                                            ? Color.theme.accentYellow
+                                            : Color.theme.accent
+                                    )
 
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text(member.name ?? member.playerId)
@@ -137,6 +132,9 @@ struct TeamDetailView: View {
                             }
                             .buttonStyle(.plain)
                         }
+
+                        // Show More / count footer
+                        memberLoadMoreFooter(totalCount: team.members.count)
                     }
                     .cardStyle()
                 }
@@ -152,26 +150,53 @@ struct TeamDetailView: View {
         .background(Color.theme.background)
         .navigationTitle(viewModel.team?.name ?? "Team")
         .navigationBarTitleDisplayMode(.inline)
-        .navigationDestination(for: String.self) { playerId in
-            UserProfileView(userId: playerId)
+        .navigationDestination(for: TeamMember.self) { member in
+            UserProfileView(userId: member.playerId)
         }
         .sheet(isPresented: $showInviteSheet) {
             InvitePlayerSheet(viewModel: viewModel)
         }
-        .task {
+        .refreshable {
+            visibleMembersCount = memberPageSize
             await viewModel.load(teamId)
+        }
+        .task {
+            visibleMembersCount = memberPageSize
+            await viewModel.load(teamId)
+        }
+        .onAppear {
+            Task { await viewModel.load(teamId) }
         }
     }
 
-    private func memberInitials(_ member: TeamMember) -> some View {
-        ZStack {
-            Circle()
-                .fill(member.role == "captain" ? Color.theme.accentYellow.opacity(0.15) : Color.theme.surfaceLight)
-                .frame(width: 40, height: 40)
-            Text(String((member.name ?? member.playerId).prefix(2)).uppercased())
+    @ViewBuilder
+    private func memberLoadMoreFooter(totalCount: Int) -> some View {
+        if totalCount > visibleMembersCount {
+            let remaining = totalCount - visibleMembersCount
+            let showCount = min(remaining, memberPageSize)
+            Button {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    visibleMembersCount += memberPageSize
+                }
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "chevron.down.circle")
+                    Text("Show \(showCount) more of \(remaining) remaining")
+                }
+                .font(.subheadline.weight(.medium))
+                .foregroundColor(Color.theme.accent)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .background(Color.theme.surfaceLight)
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            }
+            .buttonStyle(.plain)
+        } else if totalCount > memberPageSize {
+            Text("All \(totalCount) members shown")
                 .font(.caption)
-                .fontWeight(.bold)
-                .foregroundColor(member.role == "captain" ? Color.theme.accentYellow : Color.theme.textSecondary)
+                .foregroundColor(Color.theme.textTertiary)
+                .frame(maxWidth: .infinity, alignment: .center)
+                .padding(.top, 4)
         }
     }
 }
