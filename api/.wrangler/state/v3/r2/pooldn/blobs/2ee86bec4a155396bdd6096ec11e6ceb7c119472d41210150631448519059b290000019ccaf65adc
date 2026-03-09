@@ -1,0 +1,10 @@
+{
+  "entries": {
+    "player-001": { "id": "player-001", "email": "alice@thebay.city", "name": "Alice Johnson", "city": "Dallas" },
+    "player-002": { "id": "player-002", "email": "bob@thebay.city", "name": "Bob Smith", "city": "Houston" },
+    "player-003": { "id": "player-003", "email": "carol@thebay.city", "name": "Carol Williams", "city": "Dallas" },
+    "player-004": { "id": "player-004", "email": "dave@thebay.city", "name": "Dave Brown", "city": "Austin" },
+    "player-005": { "id": "player-005", "email": "eve@thebay.city", "name": "Eve Davis", "city": "Houston" },
+    "player-006": { "id": "player-006", "email": "frank@thebay.city", "name": "Frank Miller", "city": "Austin" }
+  }
+}

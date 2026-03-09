@@ -1,0 +1,38 @@
+Step 1. User clicks on ‘New Competition’ button
+Step 2. A ‘Create New Competition’ form shows up. Fields:
+- Competition Name. Just a Text.
+- Game Type (doesn’t affect on anything. Just an information for players and teams)
+- Format (Singles, Doubles (2v2), Teams). For MVP we do only Teams.
+- Tournament Type (Single Elimination, Double Elimination and Round Robin/League). For MVP we do only Round Robin / League.
+- Competition start date. Just an information for players/teams, so they can plan.
+- !!! We need a Prize field (just a sum of prize money for now).
+
+Step 3. User submits the form and a Draft competition gets created. Draft competition isn’t visible until all the information and details are filled up. The idea of a Draft is to let users come back later.
+
+Step 4. Tab ‘Participants’
+- Participation application rule. For MVP let’s just stick to ‘Anyone can apply’.
+- Team size (min and max players). It is an important requirement that would be used when Teams apply.
+
+Step 5. Tab ‘Structure’.
+- User creates list of games and break times.
+- !!! This tab is important because it will be used when Team captains assign players to games and input/confirm match results.
+
+Step 6. Tab ‘Schedule’.
+- User selects if all the games will happen in one place or teams will play in their home venues. If ‘Team venues’ are selected, Teams will have to provide their home venue.
+- !!! Venue settings are very important because they will play key role in Matchday management. For example, if two teams use the same venue as their home venue, we should make sure, one of the teams plays at home and another at their opponent’s venue.
+- Games per Opponent field. This field may be logically connected to the Prev field. If games are played at a Central Venue, then teams may play only one game against each opponent. But for season long leagues, teams usually play twice (home and away).
+- !!! This field is important at matchday generation
+- Scheduling type. Weekly rounds option means that Teams will play specific week day (i.e., every Monday and Friday). In this case, Matchdays will be generated and scheduled based on the Quantity of Teams, and Selected weekdays. Usually season long leagues are like that. In this case, every Team will play one game per Matchday. /// Fixed Matchdays are usually for event-like ‘central venue’ competitions. Scheduling will be generated based on selected dates and team quantity. In most cases, Teams will have multiple games within a competition matchday.
+
+Step 7. Review & Publish.
+It is just a preview of competition rules/terms. This entire block should be visible to Teams when they open Competition Details page (‘About’ Tab).
+
+Step 8. User clicks ‘Publish’ and competition becomes public (changes status to ‘Upcoming’). Teams can see it now and apply. The tabs change to ‘About’, ‘Teams’ and ‘Players’.
+
+Step 9. Tab ‘Overview’. This tab should actually be ‘About’ and contain information from the previous step ‘Preview’. So teams can apply and see.
+
+Step 10. The block saying ‘Ready to start the League’ with ‘Close applications and Schedule Matches’ should be visible to competition creator and app admins only, and be moved to the ‘Teams’ tab.
+Step 11. Tab ‘Teams’. User can invite or manage Team applications (accept or reject) here.
+Step 12. Tab ‘Players’ shows an MVP table of all the Players participating as Team members. Players will have their own ratings within a competition.
+Step 13. ‘Close Applications and Schedule Matches’ Button. This button prevents Teams from applying and changes Competition status to ‘Active’. Teams won’t be able to apply or get invited anymore. All the pending teams in the list will get automatically rejected.
+!!! Important to create a simple logic for scheduling matchdays after all the participating teams and their home venues are confirmed.

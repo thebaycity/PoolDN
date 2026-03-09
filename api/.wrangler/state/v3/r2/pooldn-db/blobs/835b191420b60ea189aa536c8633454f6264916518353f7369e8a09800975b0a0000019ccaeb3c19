@@ -1,0 +1,14 @@
+{
+  "id": "tp-001",
+  "competitionId": "comp-001",
+  "teamId": "team-001",
+  "teamName": "Dallas Sharks",
+  "status": "accepted",
+  "homeVenue": "Rack City Billiards",
+  "roster": [
+    { "playerId": "player-001", "name": "Alice Johnson" },
+    { "playerId": "player-003", "name": "Carol Williams" }
+  ],
+  "createdAt": "2026-03-08T00:48:47.000Z",
+  "updatedAt": "2026-03-08T00:48:47.000Z"
+}

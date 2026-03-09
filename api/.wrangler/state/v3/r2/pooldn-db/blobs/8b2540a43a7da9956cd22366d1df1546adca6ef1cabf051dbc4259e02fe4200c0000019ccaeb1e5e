@@ -1,0 +1,10 @@
+{
+  "id": "player-004",
+  "email": "dave@example.com",
+  "passwordHash": "4171d14ecd265a5755f30bcfe67c99cf:9febcc8b52477e0bf581a4f0e0b73437b808ce94ef4c04aeca0d91015cbc6bf6",
+  "name": "Dave Brown",
+  "nickname": "DaveyB",
+  "city": "Austin",
+  "createdAt": "2026-03-08T00:48:47.000Z",
+  "updatedAt": "2026-03-08T00:48:47.000Z"
+}

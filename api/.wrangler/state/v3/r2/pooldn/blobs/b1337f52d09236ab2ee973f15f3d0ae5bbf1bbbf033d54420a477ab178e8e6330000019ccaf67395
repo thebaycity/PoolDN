@@ -1,0 +1,14 @@
+{
+  "id": "tp-002",
+  "competitionId": "comp-001",
+  "teamId": "team-002",
+  "teamName": "Houston Hustlers",
+  "status": "accepted",
+  "homeVenue": "Corner Pocket Lounge",
+  "roster": [
+    { "playerId": "player-002", "name": "Bob Smith" },
+    { "playerId": "player-005", "name": "Eve Davis" }
+  ],
+  "createdAt": "2026-03-08T01:01:03.000Z",
+  "updatedAt": "2026-03-08T01:01:03.000Z"
+}

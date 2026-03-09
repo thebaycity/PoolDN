@@ -1,0 +1,29 @@
+{
+  "id": "comp-001",
+  "name": "Texas 8-Ball Spring League 2026",
+  "organizerId": "player-001",
+  "gameType": "8-Ball",
+  "format": "teams",
+  "tournamentType": "round_robin",
+  "startDate": "2026-04-01",
+  "prize": 5000,
+  "status": "upcoming",
+  "teamSizeMin": 2,
+  "teamSizeMax": 5,
+  "gameStructure": [
+    { "order": 1, "label": "Game 1", "type": "game" },
+    { "order": 2, "label": "Game 2", "type": "game" },
+    { "order": 3, "label": "Break", "type": "break" },
+    { "order": 4, "label": "Game 3", "type": "game" },
+    { "order": 5, "label": "Game 4", "type": "game" },
+    { "order": 6, "label": "Game 5 (Decider)", "type": "game" }
+  ],
+  "scheduleConfig": {
+    "venueType": "team_venues",
+    "gamesPerOpponent": 2,
+    "schedulingType": "weekly_rounds",
+    "weekdays": [1, 4]
+  },
+  "createdAt": "2026-03-08T00:48:47.000Z",
+  "updatedAt": "2026-03-08T00:48:47.000Z"
+}
