@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PoolDN — Project Notes</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:       #0f172a;
+      --surface:  #1e293b;
+      --surface2: #273549;
+      --surface3: #2f3f56;
+      --border:   #334155;
+      --accent:   #3b82f6;
+      --green:    #10b981;
+      --amber:    #f59e0b;
+      --red:      #ef4444;
+      --purple:   #8b5cf6;
+      --pink:     #ec4899;
+      --text:     #f1f5f9;
+      --text-2:   #94a3b8;
+      --text-3:   #64748b;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg); color: var(--text);
+      line-height: 1.6; font-size: 14px; min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 0 32px; height: 56px; display: flex; align-items: center; gap: 14px;
+      position: sticky; top: 0; z-index: 50;
+    }
+    .logo { font-size: 18px; font-weight: 800; color: var(--accent); }
+    .logo-sep { color: var(--border); font-size: 20px; font-weight: 200; }
+    .logo-sub { font-size: 14px; color: var(--text-2); font-weight: 500; }
+    .header-right { margin-left: auto; display: flex; gap: 10px; align-items: center; }
+    .hbadge {
+      font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 99px;
+      letter-spacing: 0.3px; cursor: default;
+    }
+    .hbadge.blue   { background: rgba(59,130,246,.15); color: #93c5fd; border: 1px solid rgba(59,130,246,.3); }
+    .hbadge.green  { background: rgba(16,185,129,.15); color: #6ee7b7; border: 1px solid rgba(16,185,129,.3); }
+    .docs-link {
+      font-size: 12px; color: var(--text-3); text-decoration: none; padding: 4px 10px;
+      border: 1px solid var(--border); border-radius: 6px; transition: all .15s;
+    }
+    .docs-link:hover { color: var(--text-2); border-color: var(--text-3); }
+
+    /* ── Page ── */
+    .page { max-width: 1100px; margin: 0 auto; padding: 36px 32px 80px; }
+
+    /* ── Stat cards ── */
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 36px; }
+    .stat-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+      padding: 16px 20px; position: relative; overflow: hidden;
+    }
+    .stat-card::before {
+      content: ""; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: var(--c, var(--accent));
+    }
+    .stat-label { font-size: 11px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600; margin-bottom: 6px; }
+    .stat-value { font-size: 26px; font-weight: 800; color: var(--text); line-height: 1; }
+    .stat-sub   { font-size: 11px; color: var(--text-3); margin-top: 4px; }
+
+    /* ── Section headers ── */
+    .section { margin-bottom: 40px; }
+    .section-header {
+      display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
+      padding-bottom: 10px; border-bottom: 1px solid var(--border);
+    }
+    .section-title { font-size: 16px; font-weight: 700; color: var(--text); }
+    .section-count {
+      font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 99px;
+      background: var(--surface2); color: var(--text-3);
+    }
+    .section-actions { margin-left: auto; display: flex; gap: 8px; }
+    .filter-btn {
+      font-size: 11px; padding: 3px 10px; border-radius: 6px; cursor: pointer;
+      background: var(--surface2); border: 1px solid var(--border); color: var(--text-3);
+      transition: all .15s;
+    }
+    .filter-btn:hover, .filter-btn.active { background: rgba(59,130,246,.15); color: var(--accent); border-color: rgba(59,130,246,.3); }
+
+    /* ── Feature cards ── */
+    .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; }
+    .card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+      padding: 14px 16px; transition: border-color .15s;
+    }
+    .card:hover { border-color: var(--text-3); }
+    .card-top { display: flex; align-items: flex-start; gap: 10px; }
+    .card-icon {
+      width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center;
+      justify-content: center; font-size: 15px; flex-shrink: 0; margin-top: 1px;
+    }
+    .card-body { flex: 1; min-width: 0; }
+    .card-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+    .card-desc  { font-size: 12px; color: var(--text-3); line-height: 1.5; }
+    .card-footer { display: flex; align-items: center; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+
+    /* ── Status tags ── */
+    .tag {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;
+      text-transform: uppercase; letter-spacing: 0.4px; cursor: default;
+    }
+    .tag-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+    .tag.done     { background: rgba(16,185,129,.12); color: #6ee7b7; }
+    .tag.building { background: rgba(245,158,11,.12); color: #fcd34d; }
+    .tag.planned  { background: rgba(59,130,246,.12); color: #93c5fd; }
+    .tag.v2       { background: rgba(139,92,246,.12); color: #c4b5fd; }
+    .tag.v3       { background: rgba(236,72,153,.12); color: #f9a8d4; }
+    .tag.question { background: rgba(239,68,68,.12);  color: #fca5a5; }
+    .tag.grey     { background: rgba(100,116,139,.12); color: var(--text-3); }
+
+    /* ── Phase pill on card ── */
+    .phase-pill {
+      font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 99px;
+      margin-left: auto; white-space: nowrap;
+    }
+    .phase-pill.p1 { background: rgba(59,130,246,.15); color: #93c5fd; }
+    .phase-pill.p2 { background: rgba(139,92,246,.15); color: #c4b5fd; }
+    .phase-pill.p3 { background: rgba(236,72,153,.15); color: #f9a8d4; }
+
+    /* ── Notes area ── */
+    .notes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
+    .note-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px;
+    }
+    .note-card.yellow { border-left: 3px solid var(--amber); }
+    .note-card.blue   { border-left: 3px solid var(--accent); }
+    .note-card.red    { border-left: 3px solid var(--red); }
+    .note-card.green  { border-left: 3px solid var(--green); }
+    .note-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-3); margin-bottom: 6px; }
+    .note-text  { font-size: 12.5px; color: var(--text-2); line-height: 1.6; }
+    .note-text code { font-size: 11px; background: var(--surface2); padding: 1px 5px; border-radius: 3px; color: var(--text); }
+
+    /* ── Open questions ── */
+    .q-list { display: flex; flex-direction: column; gap: 8px; }
+    .q-item {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+      padding: 12px 16px; display: flex; gap: 12px; align-items: flex-start;
+    }
+    .q-num {
+      width: 22px; height: 22px; border-radius: 50%; background: rgba(239,68,68,.15);
+      color: #fca5a5; font-size: 11px; font-weight: 800; display: flex; align-items: center;
+      justify-content: center; flex-shrink: 0; margin-top: 1px;
+    }
+    .q-text { font-size: 13px; color: var(--text-2); }
+    .q-text strong { color: var(--text); }
+
+    /* ── Changelog mini ── */
+    .cl-list { display: flex; flex-direction: column; gap: 0; }
+    .cl-item {
+      display: flex; gap: 16px; padding: 9px 0;
+      border-bottom: 1px solid var(--border); align-items: baseline;
+    }
+    .cl-item:last-child { border-bottom: none; }
+    .cl-date { font-size: 11px; color: var(--text-3); white-space: nowrap; min-width: 80px; }
+    .cl-section { font-size: 11px; font-weight: 700; color: var(--accent); min-width: 140px; }
+    .cl-desc { font-size: 12px; color: var(--text-2); }
+
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+      .page { padding: 20px 16px 60px; }
+      .cards { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="header">
+  <span class="logo">PoolDN</span>
+  <span class="logo-sep">/</span>
+  <span class="logo-sub">Project Notes</span>
+  <div class="header-right">
+    <a class="docs-link" href="index.html">← Full Docs</a>
+    <span class="hbadge green">MVP In Progress</span>
+    <span class="hbadge blue">Mar 2026</span>
+  </div>
+</header>
+
+<div class="page">
+
+  <!-- ── Stats ── -->
+  <div class="stats">
+    <div class="stat-card" style="--c: #3b82f6">
+      <div class="stat-label">MVP Features</div>
+      <div class="stat-value">10</div>
+      <div class="stat-sub">Phase 1 scope</div>
+    </div>
+    <div class="stat-card" style="--c: #8b5cf6">
+      <div class="stat-label">V2 Features</div>
+      <div class="stat-value">11</div>
+      <div class="stat-sub">Post-MVP backlog</div>
+    </div>
+    <div class="stat-card" style="--c: #ec4899">
+      <div class="stat-label">Phase 3+ Ideas</div>
+      <div class="stat-value">11</div>
+      <div class="stat-sub">Future vision</div>
+    </div>
+    <div class="stat-card" style="--c: #f59e0b">
+      <div class="stat-label">Open Questions</div>
+      <div class="stat-value">3</div>
+      <div class="stat-sub">Needs decision</div>
+    </div>
+    <div class="stat-card" style="--c: #ef4444">
+      <div class="stat-label">Tech Debt</div>
+      <div class="stat-value">6</div>
+      <div class="stat-sub">Known issues</div>
+    </div>
+  </div>
+
+  <!-- ── MVP Features ── -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">Phase 1 — MVP Features</span>
+      <span class="section-count" id="mvp-count">10 total</span>
+      <div class="section-actions">
+        <button class="filter-btn active" onclick="filterCards('mvp', 'all', this)">All</button>
+        <button class="filter-btn" onclick="filterCards('mvp', 'done', this)">Done</button>
+        <button class="filter-btn" onclick="filterCards('mvp', 'building', this)">Building</button>
+        <button class="filter-btn" onclick="filterCards('mvp', 'planned', this)">Planned</button>
+      </div>
+    </div>
+    <div class="cards" id="mvp-cards">
+
+      <div class="card" data-status="done">
+        <div class="card-top">
+          <div class="card-icon" style="background:rgba(16,185,129,.12); color:#6ee7b7">🔐</div>
+          <div class="card-body">
+            <div class="card-title">Authentication</div>
+            <div class="card-desc">Sign up, sign in, sign out, session persistence via Supabase Auth.</div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <span class="tag done"><span class="tag-dot"></span>Done</span>
+        </div>
+      </div>
+
+      <div class="card" data-status="done">
+        <div class="card-top">
+          <div class="card-icon" style="background:rgba(16,185,129,.12); color:#6ee7b7">👤</div>
+          <div class="card-body">
+            <div class="card-title">Player Profile</div>
+            <div class="card-desc">Create profile, edit name / city / country, view personal stats.</div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <span class="tag done"><span class="tag-dot"></span>Done</span>
+        </div>
+      </div>
+
+      <div class="card" data-status="building">
+        <div class="card-top">
+          <div class="card-icon" style="background:rgba(245,158,11,.12); color:#fcd34d">🏆</div>
+          <div class="card-body">
+            <div class="card-title">Competition Creation</div>
+            <div class="card-desc">4-tab draft setup: Basic Info, Participants, Structure (ordered game list), Schedule (venue mode + weekly rounds).</div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <span class="tag building"><span class="tag-dot"></span>Building</span>
+          <span class="tag grey">Round Robin only</span>
+          <span class="tag grey">Teams only</span>
+        </div>
+      </div>
+
+      <div class="card" data-status="building">
+        <div class="card-top">
+          <div class="card-icon" style="background:rgba(245,158,11,.12); color:#fcd34d">🔄</div>
+          <div class="card-body">
+            <div class="card-title">Competition Lifecycle</div>
+            <div class="card-desc">Draft → Upcoming → Active → Completed. Combined Close &amp; Schedule Matches button. About / Teams / Players tabs.</div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <span class="tag building"><span class="tag-dot"></span>Building</span>
+        </div>
+      </div>
+
+      <div class="card" data-status="done">
+        <div class="card-top">
+          <div class="card-icon" style="background:rgba(16,185,129,.12); color:#6ee7b7">👥</div>
+          <div class="card-body">
+            <div class="card-title">Teams</div>
+            <div class="card-desc">Create team, invite members, roster selection per competition. Captain appoints Roster Leader if not joining roster.</div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <span class="tag done"><span class="tag-dot"></span>Done</span>
+          <span class="tag planned"><span class="tag-dot"></span>Roster Leader — Planned</span>
+        </div>
+      </div>
+
+      <div class="card" data-status="building">
+        <div class="card-top">
+          <div class="card-icon" style="background:rgba(245,158,11,.12); color:#fcd34d">🎱</div>
+          <div class="card-body">
+            <div class="card-title">Matches</div>
+            <div class="card-desc">Berger round-robin scheduling, venue conflict logic (home/away), game-by-game result entry per Structure template.</div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <span class="tag building"><span class="tag-dot"></span>Building</span>
+          <span class="tag planned"><span class="tag-dot"></span>Venue conflict — Planned</span>
+        </div>
+      </div>
+
+      <div class="card" data-status="done">
+        <div class="card-top">
+          <div class="card-icon" style="background:rgba(16,185,129,.12); color:#6ee7b7">📊</div>
+          <div class="card-body">
+            <div class="card-title">Standings</div>
+            <div class="card-desc">Live league table with points, wins, losses per team. Updates after every result submission.</div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <span class="tag done"><span class="tag-dot"></span>Done</span>
+        </div>
+      </div>
+
+      <div class="card" data-status="planned">
+        <div class="card-top">
+          <div class="card-icon" style="background:rgba(59,130,246,.12); color:#93c5fd">⭐</div>
+          <div class="card-body">
+            <div class="card-title">Competition Player Ratings</div>
+            <div class="card-desc">Individual performance rating per competition. Formula: <strong>Points Earned ÷ Points Available × 100</strong>. Singles win = 3 pts, Doubles win = 2 pts, loss/appearance = 0 pts.</div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <span class="tag planned"><span class="tag-dot"></span>Planned</span>
+          <span class="tag grey">Formula confirmed</span>
+        </div>
+      </div>
+
+      <div class="card" data-status="done">
+        <div class="card-top">
+          <div class="card-icon" style="background:rgba(16,185,129,.12); color:#6ee7b7">🔔</div>
+          <div class="card-body">
+            <div class="card-title">Notifications</div>
+            <div class="card-desc">In-app notifications: team invites, application status updates, match results.</div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <span class="tag done"><span class="tag-dot"></span>Done</span>
+        </div>
+      </div>
+
+      <div class="card" data-status="planned">
+        <div class="card-top">
+          <div class="card-icon" style="background:rgba(59,130,246,.12); color:#93c5fd">📱</div>
+          <div class="card-body">
+            <div class="card-title">UI / UX</div>
+            <div class="card-desc">Mobile-first, dark theme, bottom nav on mobile. About / Teams / Players tab structure on competition detail page.</div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <span class="tag done"><span class="tag-dot"></span>Base done</span>
+          <span class="tag planned"><span class="tag-dot"></span>Tab restructure — Planned</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── V2 Features ── -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">Phase 2 — V2 Backlog</span>
+      <span class="section-count">11 features</span>
+    </div>
+    <div class="cards">
+
+      <div class="card">
+        <div class="card-top">
+          <div class="card-icon" style="background:rgba(139,92,246,.12); color:#c4b5fd">🥊</div>
+          <div class="card-body">
+            <div class="card-title">Single &amp; Double Elimination</div>
+            <div class="card-desc">Bracket-style tournament types. Single Elimination (one loss out) and Double Elimination (winner/loser brackets).</div>
+          </div>
+        </div>
+        <div class="card-footer"><span class="tag v2"><span class="tag-dot"></span>Phase 2</span></div>
+      </div>
+
+      <div class="card">
+        <div class="card-top">
+          <div class="card-icon" style="background:rgba(139,92,246,.12); color:#c4b5fd">🤝</div>
+          <div class="card-body">
+            <div class="card-title">Doubles &amp; Mixed Match Formats</div>
+            <div class="card-desc">Partner selection and game-level result aggregation for Doubles and Mixed (Singles + Doubles) formats.</div>
+          </div>
+        </div>
+        <div class="card-footer"><span class="tag v2"><span class="tag-dot"></span>Phase 2</span></div>
+      </div>
+
+      <div class="card">
+        <div class="card-top">
+          <div class="card-icon" style="background:rgba(139,92,246,.12); color:#c4b5fd">🎱</div>
+          <div class="card-body">
+            <div class="card-title">9-Ball &amp; 10-Ball Game Types</div>
+            <div class="card-desc">Additional game type options beyond 8-ball. Informational for MVP; may affect match rules in V2.</div>
+          </div>
+        </div>
+        <div class="card-footer"><span class="tag v2"><span class="tag-dot"></span>Phase 2</span></div>
+      </div>
+
+      <div class="card">
+        <div class="card-top">
+          <div class="card-icon" style="background:rgba(139,92,246,.12); color:#c4b5fd">📅</div>
+          <div class="card-body">
+            <div class="card-title">Fixed Matchdays Scheduling</div>
+            <div class="card-desc">Central venue, event-style competitions with multiple games per day on fixed dates. Suited for elimination tournaments.</div>
+          </div>
+        </div>
+        <div class="card-footer"><span class="tag v2"><span class="tag-dot"></span>Phase 2</span></div>
+      </div>
+
+      <div class="card">
+        <div class="card-top">
+          <div class="card-icon" style="background:rgba(139,92,246,.12); color:#c4b5fd">✉️</div>
+          <div class="card-body">
+            <div class="card-title">Invite-Only Competition Mode</div>
+            <div class="card-desc">Organizer manually invites specific teams instead of open applications. Useful for private or curated leagues.</div>
+          </div>
+        </div>
+        <div class="card-footer"><span class="tag v2"><span class="tag-dot"></span>Phase 2</span></div>
+      </div>
+
+      <div class="card">
+        <div class="card-top">
+          <div class="card-icon" style="background:rgba(139,92,246,.12); color:#c4b5fd">📍</div>
+          <div class="card-body">
+            <div class="card-title">Venue Management Module</div>
+            <div class="card-desc">Full standalone venue profiles with browsing, directory, photos, and contact info. Teams set a permanent home venue.</div>
+          </div>
+        </div>
+        <div class="card-footer"><span class="tag v2"><span class="tag-dot"></span>Phase 2</span></div>
+      </div>
+
+      <div class="card">
+        <div class="card-top">
+          <div class="card-icon" style="background:rgba(139,92,246,.12); color:#c4b5fd">🌍</div>
+          <div class="card-body">
+            <div class="card-title">Community / Player Directory</div>
+            <div class="card-desc">Browse all players, filter by city, view match history and team memberships. Social discovery layer.</div>
+          </div>
+        </div>
+        <div class="card-footer"><span class="tag v2"><span class="tag-dot"></span>Phase 2</span></div>
+      </div>
+
+      <div class="card">
+        <div class="card-top">
+          <div class="card-icon" style="background:rgba(139,92,246,.12); color:#c4b5fd">📍</div>
+          <div class="card-body">
+            <div class="card-title">City / Geolocation Filtering</div>
+            <div class="card-desc">Filter competitions, teams, and players by city. Multi-city support for scaling beyond the initial market.</div>
+          </div>
+        </div>
+        <div class="card-footer"><span class="tag v2"><span class="tag-dot"></span>Phase 2</span></div>
+      </div>
+
+      <div class="card">
+        <div class="card-top">
+          <div class="card-icon" style="background:rgba(139,92,246,.12); color:#c4b5fd">📸</div>
+          <div class="card-body">
+            <div class="card-title">Proof Image Upload</div>
+            <div class="card-desc">Optional photo upload for match result verification. Reduces disputes without requiring admin moderation.</div>
+          </div>
+        </div>
+        <div class="card-footer"><span class="tag v2"><span class="tag-dot"></span>Phase 2</span></div>
+      </div>
+
+      <div class="card">
+        <div class="card-top">
+          <div class="card-icon" style="background:rgba(139,92,246,.12); color:#c4b5fd">⚙️</div>
+          <div class="card-body">
+            <div class="card-title">Customizable Player Rating Formula</div>
+            <div class="card-desc">Allow organizers to configure the rating formula per competition in settings. MVP uses fixed formula (Points Earned ÷ Points Available × 100).</div>
+          </div>
+        </div>
+        <div class="card-footer"><span class="tag v2"><span class="tag-dot"></span>Phase 2</span></div>
+      </div>
+
+      <div class="card">
+        <div class="card-top">
+          <div class="card-icon" style="background:rgba(139,92,246,.12); color:#c4b5fd">📧</div>
+          <div class="card-body">
+            <div class="card-title">Email Notifications</div>
+            <div class="card-desc">SMTP-backed email for key events: invitations, application results, match reminders, result confirmations.</div>
+          </div>
+        </div>
+        <div class="card-footer"><span class="tag v2"><span class="tag-dot"></span>Phase 2</span></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── Phase 3 ── -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">Phase 3+ — Future Vision</span>
+      <span class="section-count">11 ideas</span>
+    </div>
+    <div class="cards">
+
+      <div class="card">
+        <div class="card-top">
+          <div class="card-icon" style="background:rgba(236,72,153,.12); color:#f9a8d4">⚡</div>
+          <div class="card-body">
+            <div class="card-title">Real-Time Match Updates</div>
+            <div class="card-desc">Live score updates via Supabase Realtime. Spectators and players see results as they're entered.</div>
+          </div>
+        </div>
+        <div class="card-footer"><span class="tag v3"><span class="tag-dot"></span>Phase 3</span></div>
+      </div>
+
+      <div class="card">
+        <div class="card-top">
+          <div class="card-icon" style="background:rgba(236,72,153,.12); color:#f9a8d4">📲</div>
+          <div class="card-body">
+            <div class="card-title">Push Notifications</div>
+            <div class="card-desc">Native mobile push for match reminders, result alerts, and competition updates.</div>
+          </div>
+        </div>
+        <div class="card-footer"><span class="tag v3"><span class="tag-dot"></span>Phase 3</span></div>
+      </div>
+
+      <div class="card">
+        <div class="card-top">
+          <div class="card-icon" style="background:rgba(236,72,153,.12); color:#f9a8d4">🏅</div>
+          <div class="card-body">
+            <div class="card-title">Global Player Rankings</div>
+            <div class="card-desc">Cross-competition Elo-style ranking system. FargoRate-inspired, based on accumulated match history.</div>
+          </div>
+        </div>
+        <div class="card-footer"><span class="tag v3"><span class="tag-dot"></span>Phase 3</span></div>
+      </div>
+
+      <div class="card">
+        <div class="card-top">
+          <div class="card-icon" style="background:rgba(236,72,153,.12); color:#f9a8d4">📈</div>
+          <div class="card-body">
+            <div class="card-title">Advanced Statistics &amp; Analytics</div>
+            <div class="card-desc">In-depth player and team analytics: win streaks, head-to-head records, performance trends over time.</div>
+          </div>
+        </div>
+        <div class="card-footer"><span class="tag v3"><span class="tag-dot"></span>Phase 3</span></div>
+      </div>
+
+      <div class="card">
+        <div class="card-top">
+          <div class="card-icon" style="background:rgba(236,72,153,.12); color:#f9a8d4">🗂️</div>
+          <div class="card-body">
+            <div class="card-title">Tournament Bracket Visualization</div>
+            <div class="card-desc">Visual bracket UI for Single and Double Elimination tournaments. Live updates as matches complete.</div>
+          </div>
+        </div>
+        <div class="card-footer"><span class="tag v3"><span class="tag-dot"></span>Phase 3</span></div>
+      </div>
+
+      <div class="card">
+        <div class="card-top">
+          <div class="card-icon" style="background:rgba(236,72,153,.12); color:#f9a8d4">💬</div>
+          <div class="card-body">
+            <div class="card-title">In-App Chat / Messaging</div>
+            <div class="card-desc">Team chat, direct messaging, and competition-level announcements from organizers.</div>
+          </div>
+        </div>
+        <div class="card-footer"><span class="tag v3"><span class="tag-dot"></span>Phase 3</span></div>
+      </div>
+
+      <div class="card">
+        <div class="card-top">
+          <div class="card-icon" style="background:rgba(236,72,153,.12); color:#f9a8d4">📆</div>
+          <div class="card-body">
+            <div class="card-title">Calendar Integration</div>
+            <div class="card-desc">Export match schedule to Google Calendar, Apple Calendar, or .ics. Auto-sync on schedule changes.</div>
+          </div>
+        </div>
+        <div class="card-footer"><span class="tag v3"><span class="tag-dot"></span>Phase 3</span></div>
+      </div>
+
+      <div class="card">
+        <div class="card-top">
+          <div class="card-icon" style="background:rgba(236,72,153,.12); color:#f9a8d4">💰</div>
+          <div class="card-body">
+            <div class="card-title">Sponsorship &amp; Prize Management</div>
+            <div class="card-desc">Sponsor profiles, prize pool distribution tracking, and payout records per competition.</div>
+          </div>
+        </div>
+        <div class="card-footer"><span class="tag v3"><span class="tag-dot"></span>Phase 3</span></div>
+      </div>
+
+      <div class="card">
+        <div class="card-top">
+          <div class="card-icon" style="background:rgba(236,72,153,.12); color:#f9a8d4">🌐</div>
+          <div class="card-body">
+            <div class="card-title">Multi-Language Support</div>
+            <div class="card-desc">i18n layer for the full UI. Priority languages TBD based on target markets.</div>
+          </div>
+        </div>
+        <div class="card-footer"><span class="tag v3"><span class="tag-dot"></span>Phase 3</span></div>
+      </div>
+
+      <div class="card">
+        <div class="card-top">
+          <div class="card-icon" style="background:rgba(236,72,153,.12); color:#f9a8d4">📱</div>
+          <div class="card-body">
+            <div class="card-title">Native Mobile App</div>
+            <div class="card-desc">React Native app for iOS and Android. Leverages existing API and business logic.</div>
+          </div>
+        </div>
+        <div class="card-footer"><span class="tag v3"><span class="tag-dot"></span>Phase 3</span></div>
+      </div>
+
+      <div class="card">
+        <div class="card-top">
+          <div class="card-icon" style="background:rgba(236,72,153,.12); color:#f9a8d4">🛡️</div>
+          <div class="card-body">
+            <div class="card-title">Admin Dashboard</div>
+            <div class="card-desc">Internal operational tools: user management, competition oversight, data exports, audit logs.</div>
+          </div>
+        </div>
+        <div class="card-footer"><span class="tag v3"><span class="tag-dot"></span>Phase 3</span></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── Open Questions ── -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">Open Questions</span>
+      <span class="section-count" id="q-count">3 open</span>
+    </div>
+    <div class="q-list">
+      <div class="q-item">
+        <div class="q-num">1</div>
+        <div class="q-text"><strong>DB migration timing</strong> — The KV store needs to be replaced with a proper relational schema before launch. Who owns this and what's the target date?</div>
+      </div>
+      <div class="q-item">
+        <div class="q-num">2</div>
+        <div class="q-text"><strong>Pilot league</strong> — Which league/club runs the first pilot? Defining a real pilot user early will shape UX decisions significantly.</div>
+      </div>
+      <div class="q-item">
+        <div class="q-num">3</div>
+        <div class="q-text"><strong>Roster Leader permissions</strong> — Exact permissions for Roster Leader vs Captain need to be spec'd. Can Roster Leader edit team roster? Withdraw from competition?</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Notes ── -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">Notes &amp; Decisions</span>
+    </div>
+    <div class="notes-grid">
+
+      <div class="note-card blue">
+        <div class="note-label">Player Rating Formula</div>
+        <div class="note-text">Confirmed Mar 9, 2026. Formula: <code>Points Earned ÷ Points Available × 100</code>. Singles win = 3 pts, Doubles win = 2 pts, any loss or appearance = 0 pts. Replaced old formula that awarded 1 pt for appearance — players were unhappy. Phase 2: formula becomes configurable per competition.</div>
+      </div>
+
+      <div class="note-card yellow">
+        <div class="note-label">Fixed Matchdays — Deferred</div>
+        <div class="note-text">Moved to Phase 2 (Mar 9, 2026). Fixed Matchday scheduling (central venue, multiple games per day) is typically used in elimination-style events, not round-robin leagues. Weekly rounds covers all MVP use cases.</div>
+      </div>
+
+      <div class="note-card red">
+        <div class="note-label">⚠️ Critical Tech Debt</div>
+        <div class="note-text">Current DB uses a key-value store (JSONB blobs in a single table). No transactions, no indexing, no referential integrity. Must migrate to proper relational schema before any public launch. This is the #1 pre-launch blocker.</div>
+      </div>
+
+      <div class="note-card green">
+        <div class="note-label">Venue Conflict Logic — MVP</div>
+        <div class="note-text">When two teams share the same home venue, the match generator must ensure one team plays away on that matchday. This is part of the MVP scheduling logic, not deferred. Important for leagues using home/away venue mode.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── Recent Changes ── -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">Recent Changes</span>
+      <a href="index.html#s8" style="margin-left:auto; font-size:12px; color:var(--text-3); text-decoration:none;">View full log →</a>
+    </div>
+    <div class="cl-list">
+      <div class="cl-item">
+        <span class="cl-date">Mar 9, 2026</span>
+        <span class="cl-section">All</span>
+        <span class="cl-desc">Documentation migrated to HTML site + Project Notes dashboard created</span>
+      </div>
+      <div class="cl-item">
+        <span class="cl-date">Mar 9, 2026</span>
+        <span class="cl-section">Player Ratings</span>
+        <span class="cl-desc">Rating formula confirmed: Points Earned ÷ Points Available × 100. Appearance point removed</span>
+      </div>
+      <div class="cl-item">
+        <span class="cl-date">Mar 9, 2026</span>
+        <span class="cl-section">4.1 Competition Flow</span>
+        <span class="cl-desc">Full 13-step creation &amp; management flow documented</span>
+      </div>
+      <div class="cl-item">
+        <span class="cl-date">Mar 9, 2026</span>
+        <span class="cl-section">1.3 Target Users</span>
+        <span class="cl-desc">Roster Leader role added — stand-in captain when captain isn't on the competition roster</span>
+      </div>
+      <div class="cl-item">
+        <span class="cl-date">Mar 9, 2026</span>
+        <span class="cl-section">Initial</span>
+        <span class="cl-desc">Project brief created from v1.0 dev documentation. MVP scope defined and trimmed</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function filterCards(group, status, btn) {
+    document.querySelectorAll(`#${group}-cards .card`).forEach(card => {
+      card.style.display = (status === 'all' || card.dataset.status === status) ? '' : 'none';
+    });
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const visible = [...document.querySelectorAll(`#${group}-cards .card`)].filter(c => c.style.display !== 'none').length;
+    const total   = document.querySelectorAll(`#${group}-cards .card`).length;
+    document.getElementById(`${group}-count`).textContent = status === 'all' ? `${total} total` : `${visible} of ${total}`;
+  }
+</script>
+
+</body>
+</html>
