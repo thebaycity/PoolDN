@@ -1,12 +1,5 @@
 import SwiftUI
 
-private struct RoleFilter: Identifiable {
-    let id: String        // used as filter value ("player", "organizer") or "all"
-    let label: String
-    let icon: String
-    var roleValue: String? { id == "all" ? nil : id }
-}
-
 struct InvitePlayerSheet: View {
     @Bindable var viewModel: TeamDetailViewModel
     @Environment(\.dismiss) private var dismiss
@@ -17,12 +10,6 @@ struct InvitePlayerSheet: View {
     @State private var toastIsError = false
     @FocusState private var searchFocused: Bool
 
-    private let roleFilters: [RoleFilter] = [
-        RoleFilter(id: "all",       label: "All",        icon: "person.2.fill"),
-        RoleFilter(id: "player",    label: "Players",    icon: "figure.pool.swim"),
-        RoleFilter(id: "organizer", label: "Organizers", icon: "star.circle.fill"),
-    ]
-
     private var existingMemberIds: Set<String> {
         let members = viewModel.team?.members ?? []
         return Set(members.map { (m: TeamMember) in m.playerId })
@@ -31,6 +18,7 @@ struct InvitePlayerSheet: View {
     private var isActive: Bool {
         searchVM.query.trimmingCharacters(in: CharacterSet.whitespaces).count >= 2
             || searchVM.selectedRole != nil
+            || searchVM.isBrowsing
     }
 
     var body: some View {
@@ -41,10 +29,6 @@ struct InvitePlayerSheet: View {
                     .padding(.horizontal, 16)
                     .padding(.top, 12)
                     .padding(.bottom, 8)
-
-                // ── Role filter chips ─────────────────────────
-                roleChipsRow
-                    .padding(.bottom, 10)
 
                 Divider().overlay(Color.theme.separator)
 
@@ -79,8 +63,8 @@ struct InvitePlayerSheet: View {
             }
             .animation(.spring(response: 0.32, dampingFraction: 0.78), value: toastMessage)
             .task {
-                // Browse all players on open
-                searchVM.onRoleChanged(nil as String?)
+                // Only show players when inviting team members
+                searchVM.onRoleChanged("player")
             }
         }
     }
@@ -127,40 +111,6 @@ struct InvitePlayerSheet: View {
                 )
                 .animation(.easeInOut(duration: 0.18), value: searchFocused)
         )
-    }
-
-    // MARK: - Role Chips
-
-    private var roleChipsRow: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                ForEach(roleFilters) { filter in
-                    let selected = searchVM.selectedRole == filter.roleValue
-                    Button {
-                        withAnimation(.easeInOut(duration: 0.18)) {
-                            searchVM.onRoleChanged(selected ? nil as String? : filter.roleValue)
-                        }
-                    } label: {
-                        HStack(spacing: 5) {
-                            Image(systemName: filter.icon)
-                                .font(.caption2)
-                            Text(filter.label)
-                                .font(.caption.weight(selected ? .semibold : .regular))
-                        }
-                        .foregroundColor(selected ? .white : Color.theme.textSecondary)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 7)
-                        .background(selected ? Color.theme.accent : Color.theme.surfaceLight)
-                        .clipShape(Capsule())
-                        .overlay(Capsule().strokeBorder(
-                            selected ? Color.clear : Color.theme.border,
-                            lineWidth: 0.5))
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-            .padding(.horizontal, 16)
-        }
     }
 
     // MARK: - Content
@@ -296,12 +246,6 @@ struct InvitePlayerSheet: View {
                             .padding(.horizontal, 6).padding(.vertical, 2)
                             .background(Color.theme.accentGreen.opacity(0.12))
                             .clipShape(Capsule())
-                    }
-
-                    if user.role == "organizer" {
-                        Image(systemName: "star.circle.fill")
-                            .font(.caption2)
-                            .foregroundColor(Color.theme.accentYellow)
                     }
                 }
 

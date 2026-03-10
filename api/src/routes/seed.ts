@@ -28,7 +28,9 @@ seed.post('/seed', async (c) => {
   const now = Date.now();
   const passwordHash = await hashPassword('password123');
 
-  // --- Users ---
+  // =====================
+  // USERS (8 players)
+  // =====================
   const userData = [
     { name: 'Toan Nguyen', email: 'toan@thebay.city', nickname: 'ToanN', role: 'organizer' },
     { name: 'Mike Johnson', email: 'mike@thebay.city', nickname: 'MikeJ', role: 'player' },
@@ -40,7 +42,7 @@ seed.post('/seed', async (c) => {
     { name: 'David Lee', email: 'david@thebay.city', nickname: 'DavidL', role: 'player' },
   ];
 
-  const createdUsers = [];
+  const createdUsers: { id: string; name: string | null; email: string }[] = [];
   for (const u of userData) {
     const user = await db.insert(users).values({
       id: nanoid(),
@@ -56,22 +58,21 @@ seed.post('/seed', async (c) => {
   }
 
   const [toan, mike, sarah, jake, lisa, chris, emma, david] = createdUsers;
+  const nameOf = (u: typeof toan) => u.name!;
 
-  // --- Organizers (Toan + Sarah) ---
+  // =====================
+  // ORGANIZERS
+  // =====================
   await db.insert(organizers).values({
-    id: nanoid(),
-    userId: toan.id,
-    createdAt: now,
-    updatedAt: now,
+    id: nanoid(), userId: toan.id, createdAt: now, updatedAt: now,
   });
   await db.insert(organizers).values({
-    id: nanoid(),
-    userId: sarah.id,
-    createdAt: now,
-    updatedAt: now,
+    id: nanoid(), userId: sarah.id, createdAt: now, updatedAt: now,
   });
 
-  // --- Teams ---
+  // =====================
+  // TEAMS (4 teams, 2 members each)
+  // =====================
   const teamDefs = [
     { name: 'Bay City Breakers', captain: toan, member: mike, venue: 'Elbow Room', city: 'Bay City' },
     { name: 'Midland Sharks', captain: sarah, member: emma, venue: "Shark's Pool Hall", city: 'Midland' },
@@ -99,10 +100,18 @@ seed.post('/seed', async (c) => {
 
   const [breakers, sharks, stars, legends] = createdTeams;
 
-  // Build user ID → name map for roster names
-  const userNameMap = new Map(createdUsers.map(u => [u.id, u.name]));
+  // Helper: build roster with real names
+  function roster(team: typeof breakers) {
+    return team.members.map((m: { playerId: string }) => ({
+      playerId: m.playerId,
+      name: createdUsers.find(u => u.id === m.playerId)?.name ?? m.playerId,
+    }));
+  }
 
-  // --- Competition 1: Active (Spring League 2026) ---
+  // =====================
+  // COMPETITION 1: ACTIVE — Spring League 2026
+  //   4 teams, 6 round-robin matches: 4 completed (with game-level data), 1 pending_review, 1 scheduled
+  // =====================
   const comp = await db.insert(competitions).values({
     id: nanoid(),
     name: 'Spring League 2026',
@@ -134,7 +143,10 @@ seed.post('/seed', async (c) => {
     updatedAt: now,
   }).returning().get();
 
-  // --- Competition 2: Upcoming (Summer 8-Ball Classic 2026) ---
+  // =====================
+  // COMPETITION 2: UPCOMING — Summer 8-Ball Classic 2026
+  //   Has: 1 pending app (Breakers), 1 invited (Stars), 1 accepted (Sharks)
+  // =====================
   const comp2 = await db.insert(competitions).values({
     id: nanoid(),
     name: 'Summer 8-Ball Classic 2026',
@@ -165,7 +177,10 @@ seed.post('/seed', async (c) => {
     updatedAt: now,
   }).returning().get();
 
-  // --- Competition 3: Completed (Winter League 2025) ---
+  // =====================
+  // COMPETITION 3: COMPLETED — Winter League 2025
+  //   3 teams, 3 round-robin matches, all completed with full game data + player IDs
+  // =====================
   const comp3 = await db.insert(competitions).values({
     id: nanoid(),
     name: 'Winter League 2025',
@@ -192,12 +207,14 @@ seed.post('/seed', async (c) => {
     updatedAt: now,
   }).returning().get();
 
-  // --- Competition 4: Draft (Fall 9-Ball Championship 2026) ---
+  // =====================
+  // COMPETITION 4: DRAFT — Fall 9-Ball Championship 2026
+  // =====================
   const comp4 = await db.insert(competitions).values({
     id: nanoid(),
     name: 'Fall 9-Ball Championship 2026',
     organizerId: toan.id,
-    description: 'A competitive 9-ball championship for the fall season. Teams battle it out in a round-robin format.',
+    description: 'A competitive 9-ball championship for the fall season.',
     gameType: '9-ball',
     format: 'teams',
     tournamentType: 'round_robin',
@@ -222,10 +239,11 @@ seed.post('/seed', async (c) => {
     updatedAt: now,
   }).returning().get();
 
-  // --- TeamMembers (Spring League) ---
-  const allTeams = [breakers, sharks, stars, legends];
-  const createdParticipations = [];
-  for (const team of allTeams) {
+  // =====================
+  // PARTICIPATIONS — Spring League (active, all 4 accepted)
+  // =====================
+  const springParticipations = [];
+  for (const team of [breakers, sharks, stars, legends]) {
     const p = await db.insert(teamMembers).values({
       id: nanoid(),
       competitionId: comp.id,
@@ -233,16 +251,17 @@ seed.post('/seed', async (c) => {
       teamName: team.name,
       status: 'accepted',
       homeVenue: team.homeVenue,
-      roster: team.members.map(m => ({ playerId: m.playerId, name: userNameMap.get(m.playerId) ?? m.playerId })),
+      roster: roster(team),
       createdAt: now,
       updatedAt: now,
     }).returning().get();
-    createdParticipations.push(p);
+    springParticipations.push(p);
   }
 
-  // --- TeamMembers (Winter League - completed) ---
-  const winterTeams = [breakers, sharks, stars];
-  for (const team of winterTeams) {
+  // =====================
+  // PARTICIPATIONS — Winter League (completed, 3 teams)
+  // =====================
+  for (const team of [breakers, sharks, stars]) {
     await db.insert(teamMembers).values({
       id: nanoid(),
       competitionId: comp3.id,
@@ -250,13 +269,15 @@ seed.post('/seed', async (c) => {
       teamName: team.name,
       status: 'accepted',
       homeVenue: team.homeVenue,
-      roster: team.members.map(m => ({ playerId: m.playerId, name: userNameMap.get(m.playerId) ?? m.playerId })),
+      roster: roster(team),
       createdAt: now,
       updatedAt: now,
     });
   }
 
-  // --- TeamMembers (Summer Classic - upcoming: pending app + invite) ---
+  // =====================
+  // PARTICIPATIONS — Summer Classic (upcoming: pending, invited, accepted)
+  // =====================
   await db.insert(teamMembers).values({
     id: nanoid(),
     competitionId: comp2.id,
@@ -264,7 +285,7 @@ seed.post('/seed', async (c) => {
     teamName: breakers.name,
     status: 'pending',
     homeVenue: breakers.homeVenue,
-    roster: breakers.members.map(m => ({ playerId: m.playerId, name: m.playerId })),
+    roster: roster(breakers),
     createdAt: now,
     updatedAt: now,
   });
@@ -275,7 +296,7 @@ seed.post('/seed', async (c) => {
     teamName: stars.name,
     status: 'invited',
     homeVenue: stars.homeVenue,
-    roster: stars.members.map(m => ({ playerId: m.playerId, name: m.playerId })),
+    roster: roster(stars),
     createdAt: now,
     updatedAt: now,
   });
@@ -286,38 +307,40 @@ seed.post('/seed', async (c) => {
     teamName: sharks.name,
     status: 'accepted',
     homeVenue: sharks.homeVenue,
-    roster: sharks.members.map(m => ({ playerId: m.playerId, name: m.playerId })),
+    roster: roster(sharks),
     createdAt: now,
     updatedAt: now,
   });
 
-  // --- Matches (Winter League: 3-team round-robin, all completed) ---
+  // =====================
+  // MATCHES — Winter League (completed, 3 matches, full game + player IDs)
+  // =====================
   const winterMatchDefs = [
     {
       round: 1, matchday: 1, home: breakers, away: sharks, date: '2025-11-04',
-      status: 'completed', hs: 2, as: 1,
+      status: 'completed' as const, hs: 2, as: 1,
       games: [
-        { gameOrder: 1, homePlayerName: 'Toan Nguyen', awayPlayerName: 'Sarah Chen', homeScore: 1, awayScore: 0 },
-        { gameOrder: 2, homePlayerName: 'Mike Johnson', awayPlayerName: 'Emma Wilson', homeScore: 0, awayScore: 1 },
-        { gameOrder: 3, homePlayerName: 'Toan Nguyen & Mike Johnson', awayPlayerName: 'Sarah Chen & Emma Wilson', homeScore: 1, awayScore: 0 },
+        { gameOrder: 1, homePlayerName: nameOf(toan), awayPlayerName: nameOf(sarah), homePlayerId: toan.id, awayPlayerId: sarah.id, homeScore: 1, awayScore: 0 },
+        { gameOrder: 2, homePlayerName: nameOf(mike), awayPlayerName: nameOf(emma), homePlayerId: mike.id, awayPlayerId: emma.id, homeScore: 0, awayScore: 1 },
+        { gameOrder: 3, homePlayerName: `${nameOf(toan)} & ${nameOf(mike)}`, awayPlayerName: `${nameOf(sarah)} & ${nameOf(emma)}`, homePlayerId: `${toan.id} & ${mike.id}`, awayPlayerId: `${sarah.id} & ${emma.id}`, homeScore: 1, awayScore: 0 },
       ],
     },
     {
       round: 2, matchday: 2, home: stars, away: breakers, date: '2025-11-11',
-      status: 'completed', hs: 1, as: 2,
+      status: 'completed' as const, hs: 1, as: 2,
       games: [
-        { gameOrder: 1, homePlayerName: 'Lisa Park', awayPlayerName: 'Toan Nguyen', homeScore: 0, awayScore: 1 },
-        { gameOrder: 2, homePlayerName: 'David Lee', awayPlayerName: 'Mike Johnson', homeScore: 1, awayScore: 0 },
-        { gameOrder: 3, homePlayerName: 'Lisa Park & David Lee', awayPlayerName: 'Toan Nguyen & Mike Johnson', homeScore: 0, awayScore: 1 },
+        { gameOrder: 1, homePlayerName: nameOf(lisa), awayPlayerName: nameOf(toan), homePlayerId: lisa.id, awayPlayerId: toan.id, homeScore: 0, awayScore: 1 },
+        { gameOrder: 2, homePlayerName: nameOf(david), awayPlayerName: nameOf(mike), homePlayerId: david.id, awayPlayerId: mike.id, homeScore: 1, awayScore: 0 },
+        { gameOrder: 3, homePlayerName: `${nameOf(lisa)} & ${nameOf(david)}`, awayPlayerName: `${nameOf(toan)} & ${nameOf(mike)}`, homePlayerId: `${lisa.id} & ${david.id}`, awayPlayerId: `${toan.id} & ${mike.id}`, homeScore: 0, awayScore: 1 },
       ],
     },
     {
       round: 3, matchday: 3, home: sharks, away: stars, date: '2025-11-18',
-      status: 'completed', hs: 2, as: 1,
+      status: 'completed' as const, hs: 2, as: 1,
       games: [
-        { gameOrder: 1, homePlayerName: 'Sarah Chen', awayPlayerName: 'Lisa Park', homeScore: 1, awayScore: 0 },
-        { gameOrder: 2, homePlayerName: 'Emma Wilson', awayPlayerName: 'David Lee', homeScore: 0, awayScore: 1 },
-        { gameOrder: 3, homePlayerName: 'Sarah Chen & Emma Wilson', awayPlayerName: 'Lisa Park & David Lee', homeScore: 1, awayScore: 0 },
+        { gameOrder: 1, homePlayerName: nameOf(sarah), awayPlayerName: nameOf(lisa), homePlayerId: sarah.id, awayPlayerId: lisa.id, homeScore: 1, awayScore: 0 },
+        { gameOrder: 2, homePlayerName: nameOf(emma), awayPlayerName: nameOf(david), homePlayerId: emma.id, awayPlayerId: david.id, homeScore: 0, awayScore: 1 },
+        { gameOrder: 3, homePlayerName: `${nameOf(sarah)} & ${nameOf(emma)}`, awayPlayerName: `${nameOf(lisa)} & ${nameOf(david)}`, homePlayerId: `${sarah.id} & ${emma.id}`, awayPlayerId: `${lisa.id} & ${david.id}`, homeScore: 1, awayScore: 0 },
       ],
     },
   ];
@@ -344,62 +367,74 @@ seed.post('/seed', async (c) => {
     });
   }
 
-  // --- Matches (Spring League: 6 round-robin, 4 completed with games, 2 scheduled) ---
-  const matchDefs = [
+  // =====================
+  // MATCHES — Spring League (4 completed, 1 pending_review, 1 scheduled)
+  //   Game structure: Singles1(o1), Singles2(o2), Break(o3), Doubles(o4), Singles3(o5)
+  // =====================
+  const springMatchDefs = [
+    // R1: Breakers 3-1 Legends (completed)
     {
       round: 1, matchday: 1, home: breakers, away: legends, date: '2026-04-01',
-      status: 'completed', hs: 3, as: 1,
+      status: 'completed' as const, hs: 3, as: 1,
       games: [
-        { gameOrder: 1, homePlayerName: 'Toan Nguyen', awayPlayerName: 'Jake Miller', homeScore: 1, awayScore: 0 },
-        { gameOrder: 2, homePlayerName: 'Mike Johnson', awayPlayerName: 'Chris Brown', homeScore: 1, awayScore: 0 },
-        { gameOrder: 4, homePlayerName: 'Toan Nguyen & Mike Johnson', awayPlayerName: 'Jake Miller & Chris Brown', homeScore: 0, awayScore: 1 },
-        { gameOrder: 5, homePlayerName: 'Toan Nguyen', awayPlayerName: 'Chris Brown', homeScore: 1, awayScore: 0 },
+        { gameOrder: 1, homePlayerName: nameOf(toan), awayPlayerName: nameOf(jake), homePlayerId: toan.id, awayPlayerId: jake.id, homeScore: 1, awayScore: 0 },
+        { gameOrder: 2, homePlayerName: nameOf(mike), awayPlayerName: nameOf(chris), homePlayerId: mike.id, awayPlayerId: chris.id, homeScore: 1, awayScore: 0 },
+        { gameOrder: 4, homePlayerName: `${nameOf(toan)} & ${nameOf(mike)}`, awayPlayerName: `${nameOf(jake)} & ${nameOf(chris)}`, homePlayerId: `${toan.id} & ${mike.id}`, awayPlayerId: `${jake.id} & ${chris.id}`, homeScore: 0, awayScore: 1 },
+        { gameOrder: 5, homePlayerName: nameOf(toan), awayPlayerName: nameOf(chris), homePlayerId: toan.id, awayPlayerId: chris.id, homeScore: 1, awayScore: 0 },
       ],
     },
+    // R1: Sharks 2-2 Stars (completed, draw)
     {
       round: 1, matchday: 1, home: sharks, away: stars, date: '2026-04-01',
-      status: 'completed', hs: 2, as: 2,
+      status: 'completed' as const, hs: 2, as: 2,
       games: [
-        { gameOrder: 1, homePlayerName: 'Sarah Chen', awayPlayerName: 'Lisa Park', homeScore: 1, awayScore: 0 },
-        { gameOrder: 2, homePlayerName: 'Emma Wilson', awayPlayerName: 'David Lee', homeScore: 0, awayScore: 1 },
-        { gameOrder: 4, homePlayerName: 'Sarah Chen & Emma Wilson', awayPlayerName: 'Lisa Park & David Lee', homeScore: 1, awayScore: 0 },
-        { gameOrder: 5, homePlayerName: 'Sarah Chen', awayPlayerName: 'David Lee', homeScore: 0, awayScore: 1 },
+        { gameOrder: 1, homePlayerName: nameOf(sarah), awayPlayerName: nameOf(lisa), homePlayerId: sarah.id, awayPlayerId: lisa.id, homeScore: 1, awayScore: 0 },
+        { gameOrder: 2, homePlayerName: nameOf(emma), awayPlayerName: nameOf(david), homePlayerId: emma.id, awayPlayerId: david.id, homeScore: 0, awayScore: 1 },
+        { gameOrder: 4, homePlayerName: `${nameOf(sarah)} & ${nameOf(emma)}`, awayPlayerName: `${nameOf(lisa)} & ${nameOf(david)}`, homePlayerId: `${sarah.id} & ${emma.id}`, awayPlayerId: `${lisa.id} & ${david.id}`, homeScore: 1, awayScore: 0 },
+        { gameOrder: 5, homePlayerName: nameOf(sarah), awayPlayerName: nameOf(david), homePlayerId: sarah.id, awayPlayerId: david.id, homeScore: 0, awayScore: 1 },
       ],
     },
+    // R2: Breakers 4-0 Sharks (completed, dominant)
     {
       round: 2, matchday: 2, home: breakers, away: sharks, date: '2026-04-08',
-      status: 'completed', hs: 4, as: 0,
+      status: 'completed' as const, hs: 4, as: 0,
       games: [
-        { gameOrder: 1, homePlayerName: 'Toan Nguyen', awayPlayerName: 'Sarah Chen', homeScore: 1, awayScore: 0 },
-        { gameOrder: 2, homePlayerName: 'Mike Johnson', awayPlayerName: 'Emma Wilson', homeScore: 1, awayScore: 0 },
-        { gameOrder: 4, homePlayerName: 'Toan Nguyen & Mike Johnson', awayPlayerName: 'Sarah Chen & Emma Wilson', homeScore: 1, awayScore: 0 },
-        { gameOrder: 5, homePlayerName: 'Toan Nguyen', awayPlayerName: 'Emma Wilson', homeScore: 1, awayScore: 0 },
+        { gameOrder: 1, homePlayerName: nameOf(toan), awayPlayerName: nameOf(sarah), homePlayerId: toan.id, awayPlayerId: sarah.id, homeScore: 1, awayScore: 0 },
+        { gameOrder: 2, homePlayerName: nameOf(mike), awayPlayerName: nameOf(emma), homePlayerId: mike.id, awayPlayerId: emma.id, homeScore: 1, awayScore: 0 },
+        { gameOrder: 4, homePlayerName: `${nameOf(toan)} & ${nameOf(mike)}`, awayPlayerName: `${nameOf(sarah)} & ${nameOf(emma)}`, homePlayerId: `${toan.id} & ${mike.id}`, awayPlayerId: `${sarah.id} & ${emma.id}`, homeScore: 1, awayScore: 0 },
+        { gameOrder: 5, homePlayerName: nameOf(toan), awayPlayerName: nameOf(emma), homePlayerId: toan.id, awayPlayerId: emma.id, homeScore: 1, awayScore: 0 },
       ],
     },
+    // R2: Legends 1-3 Stars (completed)
     {
       round: 2, matchday: 2, home: legends, away: stars, date: '2026-04-08',
-      status: 'completed', hs: 1, as: 3,
+      status: 'completed' as const, hs: 1, as: 3,
       games: [
-        { gameOrder: 1, homePlayerName: 'Jake Miller', awayPlayerName: 'Lisa Park', homeScore: 0, awayScore: 1 },
-        { gameOrder: 2, homePlayerName: 'Chris Brown', awayPlayerName: 'David Lee', homeScore: 1, awayScore: 0 },
-        { gameOrder: 4, homePlayerName: 'Jake Miller & Chris Brown', awayPlayerName: 'Lisa Park & David Lee', homeScore: 0, awayScore: 1 },
-        { gameOrder: 5, homePlayerName: 'Jake Miller', awayPlayerName: 'David Lee', homeScore: 0, awayScore: 1 },
+        { gameOrder: 1, homePlayerName: nameOf(jake), awayPlayerName: nameOf(lisa), homePlayerId: jake.id, awayPlayerId: lisa.id, homeScore: 0, awayScore: 1 },
+        { gameOrder: 2, homePlayerName: nameOf(chris), awayPlayerName: nameOf(david), homePlayerId: chris.id, awayPlayerId: david.id, homeScore: 1, awayScore: 0 },
+        { gameOrder: 4, homePlayerName: `${nameOf(jake)} & ${nameOf(chris)}`, awayPlayerName: `${nameOf(lisa)} & ${nameOf(david)}`, homePlayerId: `${jake.id} & ${chris.id}`, awayPlayerId: `${lisa.id} & ${david.id}`, homeScore: 0, awayScore: 1 },
+        { gameOrder: 5, homePlayerName: nameOf(jake), awayPlayerName: nameOf(david), homePlayerId: jake.id, awayPlayerId: david.id, homeScore: 0, awayScore: 1 },
       ],
     },
-    // Round 3: Breakers vs Stars — pending_review (Toan submitted, Lisa hasn't yet)
+    // R3: Breakers vs Stars — pending_review (Toan submitted, Lisa hasn't confirmed)
     {
       round: 3, matchday: 3, home: breakers, away: stars, date: '2026-04-15',
-      status: 'pending_review', hs: 3, as: 1,
+      status: 'pending_review' as const, hs: 3, as: 1,
       homeSubmission: JSON.stringify({
         homeScore: 3, awayScore: 1,
+        games: [
+          { gameOrder: 1, homePlayerName: nameOf(toan), awayPlayerName: nameOf(lisa), homePlayerId: toan.id, awayPlayerId: lisa.id, homeScore: 1, awayScore: 0 },
+          { gameOrder: 2, homePlayerName: nameOf(mike), awayPlayerName: nameOf(david), homePlayerId: mike.id, awayPlayerId: david.id, homeScore: 1, awayScore: 0 },
+          { gameOrder: 4, homePlayerName: `${nameOf(toan)} & ${nameOf(mike)}`, awayPlayerName: `${nameOf(lisa)} & ${nameOf(david)}`, homePlayerId: `${toan.id} & ${mike.id}`, awayPlayerId: `${lisa.id} & ${david.id}`, homeScore: 0, awayScore: 1 },
+          { gameOrder: 5, homePlayerName: nameOf(toan), awayPlayerName: nameOf(david), homePlayerId: toan.id, awayPlayerId: david.id, homeScore: 1, awayScore: 0 },
+        ],
         submittedBy: toan.id, submittedAt: now,
       }),
-      awaySubmission: undefined,
     },
-    // Round 3: Sharks vs Legends — pending_review (disputed: both submitted different scores)
+    // R3: Sharks vs Legends — pending_review (disputed scores)
     {
       round: 3, matchday: 3, home: sharks, away: legends, date: '2026-04-15',
-      status: 'pending_review', hs: 0, as: 0,
+      status: 'pending_review' as const, hs: 0, as: 0,
       homeSubmission: JSON.stringify({
         homeScore: 2, awayScore: 1,
         submittedBy: sarah.id, submittedAt: now,
@@ -411,8 +446,8 @@ seed.post('/seed', async (c) => {
     },
   ];
 
-  const createdMatches = [];
-  for (const m of matchDefs) {
+  const createdSpringMatches = [];
+  for (const m of springMatchDefs) {
     const match = await db.insert(matches).values({
       id: nanoid(),
       competitionId: comp.id,
@@ -427,17 +462,19 @@ seed.post('/seed', async (c) => {
       status: m.status,
       homeScore: m.hs,
       awayScore: m.as,
-      games: 'games' in m ? m.games : undefined,
-      homeSubmission: 'homeSubmission' in m ? m.homeSubmission : undefined,
-      awaySubmission: 'awaySubmission' in m ? m.awaySubmission : undefined,
+      games: 'games' in m ? (m as any).games : undefined,
+      homeSubmission: 'homeSubmission' in m ? (m as any).homeSubmission : undefined,
+      awaySubmission: 'awaySubmission' in m ? (m as any).awaySubmission : undefined,
       submittedBy: m.status === 'completed' ? toan.id : undefined,
       createdAt: now,
       updatedAt: now,
     }).returning().get();
-    createdMatches.push(match);
+    createdSpringMatches.push(match);
   }
 
-  // --- Pending team invitation for Toan (from Midland Sharks) ---
+  // =====================
+  // TEAM INVITATIONS (player-to-team)
+  // =====================
   await db.insert(teamInvitations).values({
     id: nanoid(),
     teamId: sharks.id,
@@ -450,8 +487,11 @@ seed.post('/seed', async (c) => {
     updatedAt: now,
   });
 
-  // --- Notifications (all types for Toan) ---
+  // =====================
+  // NOTIFICATIONS — cover all types for testing
+  // =====================
   const notificationDefs = [
+    // --- Toan (organizer + player) ---
     {
       userId: toan.id, type: 'competition_update',
       title: 'Competition Started',
@@ -462,13 +502,13 @@ seed.post('/seed', async (c) => {
       userId: toan.id, type: 'match_result',
       title: 'Match Result',
       message: 'Bay City Breakers defeated Bay City Legends 3-1',
-      read: true, referenceId: createdMatches[0].id, referenceType: 'match',
+      read: true, referenceId: createdSpringMatches[0].id, referenceType: 'match',
     },
     {
       userId: toan.id, type: 'match_scheduled',
       title: 'Upcoming Match',
       message: 'Bay City Breakers vs Saginaw Stars on Apr 15, 2026',
-      read: false, referenceId: createdMatches[4].id, referenceType: 'match',
+      read: false, referenceId: createdSpringMatches[4].id, referenceType: 'match',
     },
     {
       userId: toan.id, type: 'team_invitation',
@@ -488,7 +528,32 @@ seed.post('/seed', async (c) => {
       message: 'Summer 8-Ball Classic 2026 is now accepting teams!',
       read: false, referenceId: comp2.id, referenceType: 'competition',
     },
-    // Competition invitation for Lisa (Stars captain) with metadata
+    // Score submitted notification for organizer Toan (Breakers vs Stars)
+    {
+      userId: toan.id, type: 'score_submitted',
+      title: 'Score Submitted',
+      message: 'Score submitted for Bay City Breakers vs Saginaw Stars (3-1)',
+      read: false, referenceId: createdSpringMatches[4].id, referenceType: 'match',
+      metadata: JSON.stringify({
+        matchId: createdSpringMatches[4].id,
+        homeTeamName: 'Bay City Breakers', awayTeamName: 'Saginaw Stars',
+        homeScore: 3, awayScore: 1, submitterName: nameOf(toan),
+      }),
+    },
+    // Score disputed notification for organizer Toan (Sharks vs Legends)
+    {
+      userId: toan.id, type: 'score_disputed',
+      title: 'Score Disputed',
+      message: 'Midland Sharks vs Bay City Legends has conflicting score submissions. Please review.',
+      read: false, referenceId: createdSpringMatches[5].id, referenceType: 'match',
+      metadata: JSON.stringify({
+        matchId: createdSpringMatches[5].id,
+        homeTeamName: 'Midland Sharks', awayTeamName: 'Bay City Legends',
+        homeSubmission: { homeScore: 2, awayScore: 1 },
+        awaySubmission: { homeScore: 1, awayScore: 2 },
+      }),
+    },
+    // --- Lisa (Stars captain) ---
     {
       userId: lisa.id, type: 'competition_invitation',
       title: 'Competition Invitation',
@@ -499,62 +564,37 @@ seed.post('/seed', async (c) => {
         competitionName: 'Summer 8-Ball Classic 2026',
       }),
     },
-    // Notifications for other players
+    // Score submitted for Lisa to confirm (Breakers vs Stars)
+    {
+      userId: lisa.id, type: 'score_submitted',
+      title: 'Score Submitted',
+      message: `${nameOf(toan)} submitted the score for Bay City Breakers vs Saginaw Stars (3-1). Please review and confirm.`,
+      read: false, referenceId: createdSpringMatches[4].id, referenceType: 'match',
+      metadata: JSON.stringify({
+        matchId: createdSpringMatches[4].id,
+        homeTeamName: 'Bay City Breakers', awayTeamName: 'Saginaw Stars',
+        homeScore: 3, awayScore: 1, submitterName: nameOf(toan),
+      }),
+    },
+    // --- Jake (Legends captain) ---
     {
       userId: jake.id, type: 'match_result',
       title: 'Match Result',
       message: 'Bay City Legends lost to Bay City Breakers 1-3',
-      read: false, referenceId: createdMatches[0].id, referenceType: 'match',
+      read: false, referenceId: createdSpringMatches[0].id, referenceType: 'match',
     },
+    // --- Sarah (Sharks captain + organizer) ---
     {
       userId: sarah.id, type: 'match_result',
       title: 'Match Result',
       message: 'Midland Sharks drew with Saginaw Stars 2-2',
-      read: false, referenceId: createdMatches[1].id, referenceType: 'match',
+      read: false, referenceId: createdSpringMatches[1].id, referenceType: 'match',
     },
-    // Sarah gets notification about Breakers pending application
     {
       userId: sarah.id, type: 'competition_update',
       title: 'New Application',
       message: 'Bay City Breakers has applied to Summer 8-Ball Classic 2026',
       read: false, referenceId: comp2.id, referenceType: 'competition',
-    },
-    // Score submitted: Lisa needs to confirm (Toan submitted Breakers vs Stars)
-    {
-      userId: lisa.id, type: 'score_submitted',
-      title: 'Score Submitted',
-      message: 'Toan Nguyen submitted the score for Bay City Breakers vs Saginaw Stars (3-1). Please review and confirm.',
-      read: false, referenceId: createdMatches[4].id, referenceType: 'match',
-      metadata: JSON.stringify({
-        matchId: createdMatches[4].id,
-        homeTeamName: 'Bay City Breakers', awayTeamName: 'Saginaw Stars',
-        homeScore: 3, awayScore: 1, submitterName: 'Toan Nguyen',
-      }),
-    },
-    // Score submitted: organizer (Toan) gets notified about Breakers vs Stars submission
-    {
-      userId: toan.id, type: 'score_submitted',
-      title: 'Score Submitted',
-      message: 'Score submitted for Bay City Breakers vs Saginaw Stars (3-1)',
-      read: false, referenceId: createdMatches[4].id, referenceType: 'match',
-      metadata: JSON.stringify({
-        matchId: createdMatches[4].id,
-        homeTeamName: 'Bay City Breakers', awayTeamName: 'Saginaw Stars',
-        homeScore: 3, awayScore: 1, submitterName: 'Toan Nguyen',
-      }),
-    },
-    // Score disputed: organizer (Toan) must resolve Sharks vs Legends
-    {
-      userId: toan.id, type: 'score_disputed',
-      title: 'Score Disputed',
-      message: 'Midland Sharks vs Bay City Legends has conflicting score submissions. Please review.',
-      read: false, referenceId: createdMatches[5].id, referenceType: 'match',
-      metadata: JSON.stringify({
-        matchId: createdMatches[5].id,
-        homeTeamName: 'Midland Sharks', awayTeamName: 'Bay City Legends',
-        homeSubmission: { homeScore: 2, awayScore: 1 },
-        awaySubmission: { homeScore: 1, awayScore: 2 },
-      }),
     },
   ];
 
@@ -562,12 +602,15 @@ seed.post('/seed', async (c) => {
     await db.insert(notifications).values({
       id: nanoid(),
       ...n,
-      createdAt: now,
+      actioned: false,
+      createdAt: now - Math.floor(Math.random() * 86400000 * 7), // spread over last 7 days
       updatedAt: now,
     });
   }
 
-  // --- Countries & Cities ---
+  // =====================
+  // COUNTRIES & CITIES
+  // =====================
   await db.insert(countries).values({ code: 'VN', name: 'Vietnam', createdAt: now, updatedAt: now });
   await db.insert(countries).values({ code: 'US', name: 'United States', createdAt: now, updatedAt: now });
 
@@ -595,8 +638,8 @@ seed.post('/seed', async (c) => {
     users: createdUsers.length,
     teams: createdTeams.length,
     competitions: 4,
-    teamMembers: createdParticipations.length + 3 + 3,
-    matches: winterMatchDefs.length + matchDefs.length,
+    springMatches: createdSpringMatches.length,
+    winterMatches: winterMatchDefs.length,
     notifications: notificationDefs.length,
     countries: 2,
     cities: vnCities.length + usCities.length,

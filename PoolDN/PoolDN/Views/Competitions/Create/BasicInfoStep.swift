@@ -10,9 +10,9 @@ struct BasicInfoStep: View {
                 formCard {
                     sectionLabel("Basic Info", icon: "doc.text")
 
-                    styledField("Competition Name", text: $viewModel.name, placeholder: "e.g. City 8-Ball League", icon: "trophy")
+                    validatedStyledField("Competition Name *", text: $viewModel.name, placeholder: "e.g. City 8-Ball League", icon: "trophy", error: viewModel.nameError)
                     Divider().overlay(Color.theme.separator)
-                    styledField("Game Type", text: $viewModel.gameType, placeholder: "e.g. 8-Ball, 9-Ball", icon: "circle.grid.3x3")
+                    validatedStyledField("Game Type *", text: $viewModel.gameType, placeholder: "e.g. 8-Ball, 9-Ball", icon: "circle.grid.3x3", error: viewModel.gameTypeError)
                     Divider().overlay(Color.theme.separator)
                     styledTextEditor("Description (optional)", text: $viewModel.description, placeholder: "Describe the competition format, rules…")
                 }
@@ -34,13 +34,21 @@ struct BasicInfoStep: View {
                     sectionLabel("Date & Prize", icon: "calendar")
 
                     HStack {
-                        Label("Start Date", systemImage: "calendar")
+                        Label("Start Date *", systemImage: "calendar")
                             .font(.subheadline)
-                            .foregroundColor(Color.theme.textSecondary)
+                            .foregroundColor(viewModel.startDateError != nil ? Color.theme.accentRed : Color.theme.textSecondary)
                         Spacer()
-                        DatePicker("", selection: $viewModel.startDate, displayedComponents: .date)
+                        DatePicker("", selection: $viewModel.startDate,
+                                   in: Date().addingTimeInterval(86400)...,
+                                   displayedComponents: .date)
                             .labelsHidden()
                             .tint(Color.theme.accent)
+                    }
+                    if let err = viewModel.startDateError {
+                        Text(err)
+                            .font(.caption2)
+                            .foregroundColor(Color.theme.accentRed)
+                            .frame(maxWidth: .infinity, alignment: .leading)
                     }
 
                     Divider().overlay(Color.theme.separator)
@@ -106,6 +114,35 @@ struct BasicInfoStep: View {
                     .foregroundColor(Color.theme.textPrimary)
             }
         }
+    }
+
+    private func validatedStyledField(_ label: String, text: Binding<String>, placeholder: String, icon: String, error: String?) -> some View {
+        let hasContent = !text.wrappedValue.trimmingCharacters(in: .whitespaces).isEmpty
+        let showError = hasContent && error != nil
+        return VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 10) {
+                Image(systemName: icon)
+                    .font(.subheadline)
+                    .foregroundColor(showError ? Color.theme.accentRed : Color.theme.accent)
+                    .frame(width: 20)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(label)
+                        .font(.caption)
+                        .foregroundColor(showError ? Color.theme.accentRed : Color.theme.textTertiary)
+                    TextField(placeholder, text: text)
+                        .font(.subheadline)
+                        .foregroundColor(Color.theme.textPrimary)
+                }
+            }
+            if showError, let err = error {
+                Text(err)
+                    .font(.caption2)
+                    .foregroundColor(Color.theme.accentRed)
+                    .padding(.leading, 30)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+        }
+        .animation(.easeInOut(duration: 0.15), value: showError)
     }
 
     private func styledTextEditor(_ label: String, text: Binding<String>, placeholder: String) -> some View {

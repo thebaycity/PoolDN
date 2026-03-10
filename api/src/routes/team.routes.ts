@@ -48,6 +48,18 @@ teams.put('/:id', zValidator('json', updateTeamSchema), async (c) => {
   return c.json(team);
 });
 
+teams.delete('/:id', async (c) => {
+  const services = createServices(c);
+  const result = await teamService.deleteTeam(services, c.req.param('id'), c.get('userId'));
+  return c.json(result);
+});
+
+teams.get('/:id/invitations', async (c) => {
+  const services = createServices(c);
+  const invitations = await teamService.getTeamInvitations(services, c.req.param('id'), c.get('userId'));
+  return c.json(invitations);
+});
+
 teams.post('/:id/invite', zValidator('json', invitePlayerSchema), async (c) => {
   const { email } = c.req.valid('json');
   const services = createServices(c);

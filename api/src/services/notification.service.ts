@@ -1,4 +1,4 @@
-import { eq, desc, sql, and } from 'drizzle-orm';
+import { eq, desc, sql, and, inArray } from 'drizzle-orm';
 import { Services } from '../utils/helpers';
 import { notifications } from '../db/schema';
 import { AppError } from '../utils/errors';
@@ -29,4 +29,33 @@ export async function markNotificationRead(services: Services, notificationId: s
     .set({ read: true, updatedAt: Date.now() })
     .where(eq(notifications.id, notificationId))
     .returning().get();
+}
+
+export async function markNotificationsActioned(
+  services: Services, referenceId: string, referenceType: string, types: string[]
+) {
+  const { db } = services;
+  await db.update(notifications)
+    .set({ actioned: true, updatedAt: Date.now() })
+    .where(and(
+      eq(notifications.referenceId, referenceId),
+      eq(notifications.referenceType, referenceType),
+      inArray(notifications.type, types),
+      eq(notifications.actioned, false),
+    ));
+}
+
+export async function markUserNotificationsActioned(
+  services: Services, userId: string, referenceId: string, referenceType: string, types: string[]
+) {
+  const { db } = services;
+  await db.update(notifications)
+    .set({ actioned: true, updatedAt: Date.now() })
+    .where(and(
+      eq(notifications.userId, userId),
+      eq(notifications.referenceId, referenceId),
+      eq(notifications.referenceType, referenceType),
+      inArray(notifications.type, types),
+      eq(notifications.actioned, false),
+    ));
 }

@@ -9,6 +9,7 @@ struct TeamInvitationDetailView: View {
     @State private var isResponding = false
     @State private var isCompleted = false
     @State private var errorMessage: String?
+    @State private var showDeclineConfirmation = false
 
     var body: some View {
         NavigationStack {
@@ -60,7 +61,7 @@ struct TeamInvitationDetailView: View {
                     if !isCompleted {
                         HStack(spacing: 12) {
                             Button {
-                                respond(accept: false)
+                                showDeclineConfirmation = true
                             } label: {
                                 HStack(spacing: 6) {
                                     Image(systemName: "xmark")
@@ -72,6 +73,14 @@ struct TeamInvitationDetailView: View {
                                 .padding(.vertical, 14)
                                 .background(Color.theme.accentRed.opacity(0.12))
                                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            }
+                            .confirmationDialog("Decline Invitation?", isPresented: $showDeclineConfirmation, titleVisibility: .visible) {
+                                Button("Decline", role: .destructive) {
+                                    respond(accept: false)
+                                }
+                                Button("Cancel", role: .cancel) {}
+                            } message: {
+                                Text("Are you sure you want to decline this team invitation?")
                             }
 
                             Button {

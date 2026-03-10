@@ -95,6 +95,21 @@ export async function updateTeam(
     .returning().get();
 }
 
+export async function deleteTeam(
+  services: Services,
+  teamId: string,
+  userId: string
+) {
+  const { db } = services;
+  const team = await db.select().from(teams).where(eq(teams.id, teamId)).get();
+  if (!team) throw AppError.notFound('Team not found');
+  if (team.captainId !== userId) throw AppError.forbidden('Only captain can delete team');
+
+  await db.delete(teamInvitations).where(eq(teamInvitations.teamId, teamId));
+  await db.delete(teams).where(eq(teams.id, teamId));
+  return { success: true };
+}
+
 export async function invitePlayerByEmail(
   services: Services,
   teamId: string,
@@ -214,4 +229,15 @@ export async function respondToInvitation(
 export async function getPlayerInvitations(services: Services, userId: string) {
   const { db } = services;
   return db.select().from(teamInvitations).where(eq(teamInvitations.invitedUserId, userId)).all();
+}
+
+export async function getTeamInvitations(services: Services, teamId: string, userId: string) {
+  const { db } = services;
+  const team = await db.select().from(teams).where(eq(teams.id, teamId)).get();
+  if (!team) throw AppError.notFound('Team not found');
+  if (team.captainId !== userId) throw AppError.forbidden('Only captain can view invitations');
+  return db.select().from(teamInvitations)
+    .where(eq(teamInvitations.teamId, teamId))
+    .orderBy(desc(teamInvitations.createdAt))
+    .all();
 }

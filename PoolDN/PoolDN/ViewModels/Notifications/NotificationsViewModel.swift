@@ -76,6 +76,7 @@ class NotificationsViewModel {
         do {
             _ = try await CompetitionService.respondToInvitation(competitionId: competitionId, teamId: teamId, accept: accept)
             competitionInvitations.removeAll { $0.competitionId == competitionId && $0.teamId == teamId }
+            await load()
         } catch {
             errorMessage = error.localizedDescription
         }

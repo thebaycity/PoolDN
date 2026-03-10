@@ -50,6 +50,48 @@ struct UserProfileView: View {
                         .cardStyle()
                     }
 
+                    // Player Rating
+                    if let stats = viewModel.stats, (stats.gamesPlayed ?? 0) > 0 {
+                        VStack(alignment: .leading, spacing: 14) {
+                            Text("Player Rating")
+                                .sectionHeader()
+
+                            let rating = stats.rating ?? 0
+                            let ratingColor = rating >= 70 ? Color.theme.accentGreen
+                                : rating >= 40 ? Color.yellow
+                                : Color.theme.accentRed
+
+                            HStack(spacing: 20) {
+                                Spacer()
+                                ZStack {
+                                    Circle()
+                                        .stroke(Color.theme.separator, lineWidth: 6)
+                                        .frame(width: 80, height: 80)
+                                    Circle()
+                                        .trim(from: 0, to: rating / 100)
+                                        .stroke(ratingColor, style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                                        .rotationEffect(.degrees(-90))
+                                        .frame(width: 80, height: 80)
+                                    Text(String(format: "%.1f%%", rating))
+                                        .font(.subheadline)
+                                        .fontWeight(.bold)
+                                        .foregroundColor(ratingColor)
+                                }
+                                Spacer()
+                            }
+                            .padding(.vertical, 4)
+
+                            HStack(spacing: 0) {
+                                statBox("GP", "\(stats.gamesPlayed ?? 0)", icon: "number", color: Color.theme.textPrimary)
+                                divider
+                                statBox("Singles", "\(stats.singlesWon ?? 0)-\(stats.singlesLost ?? 0)", icon: "person.fill", color: Color.theme.accent)
+                                divider
+                                statBox("Doubles", "\(stats.doublesWon ?? 0)-\(stats.doublesLost ?? 0)", icon: "person.2.fill", color: Color.theme.accent)
+                            }
+                        }
+                        .cardStyle()
+                    }
+
                     // Teams
                     if !viewModel.teams.isEmpty {
                         VStack(alignment: .leading, spacing: 14) {

@@ -24,6 +24,17 @@ struct MatchRow: View {
                             .font(.title3)
                             .fontWeight(.bold)
                             .foregroundColor(Color.theme.textPrimary)
+                    } else if match.status == .pendingReview,
+                              let sub = match.homeSubmission ?? match.awaySubmission {
+                        VStack(spacing: 1) {
+                            Text("\(sub.homeScore) – \(sub.awayScore)")
+                                .font(.title3)
+                                .fontWeight(.bold)
+                                .foregroundColor(Color.theme.accentYellow)
+                            Text("Proposed")
+                                .font(.system(size: 8, weight: .medium))
+                                .foregroundColor(Color.theme.accentYellow.opacity(0.7))
+                        }
                     } else {
                         Text("vs")
                             .font(.caption)

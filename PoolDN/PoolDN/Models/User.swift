@@ -25,4 +25,12 @@ struct UserStats: Codable {
     let losses: Int
     let draws: Int
     let teamsCount: Int
+    let gamesPlayed: Int?
+    let singlesWon: Int?
+    let singlesLost: Int?
+    let doublesWon: Int?
+    let doublesLost: Int?
+    let pointsEarned: Int?
+    let pointsAvailable: Int?
+    let rating: Double?
 }

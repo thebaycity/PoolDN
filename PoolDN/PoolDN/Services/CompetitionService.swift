@@ -74,6 +74,10 @@ enum CompetitionService {
         return try await APIClient.shared.post("/competitions/\(competitionId)/invitations/\(teamId)/respond", body: Body(accept: accept))
     }
 
+    static func withdrawApplication(competitionId: String, teamId: String) async throws {
+        try await APIClient.shared.delete("/competitions/\(competitionId)/applications/\(teamId)")
+    }
+
     static func withdrawInvitation(competitionId: String, teamId: String) async throws {
         try await APIClient.shared.delete("/competitions/\(competitionId)/invitations/\(teamId)")
     }

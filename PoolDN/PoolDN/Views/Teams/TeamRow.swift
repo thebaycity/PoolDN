@@ -65,9 +65,11 @@ struct TeamRow: View {
             }
             .layoutPriority(1)
 
+            Spacer(minLength: 8)
+
             Image(systemName: "chevron.right")
-                .font(.caption2.weight(.semibold))
-                .foregroundColor(Color.theme.textTertiary)
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundColor(Color.theme.textTertiary.opacity(0.6))
         }
         .padding(compact ? 10 : 12)
         .frame(maxWidth: .infinity, alignment: .leading)

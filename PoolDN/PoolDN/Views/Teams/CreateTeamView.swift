@@ -20,7 +20,22 @@ struct CreateTeamView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
 
                 VStack(spacing: 16) {
-                    FormField(label: "Team Name", text: $viewModel.name, placeholder: "e.g. Pool Sharks", icon: "person.3")
+                    // Team Name with inline validation
+                    VStack(alignment: .leading, spacing: 6) {
+                        FormField(
+                            label: "Team Name *",
+                            text: $viewModel.name,
+                            placeholder: "e.g. Pool Sharks",
+                            icon: "person.3"
+                        )
+                        if let err = viewModel.nameError {
+                            Label(err, systemImage: "exclamationmark.triangle.fill")
+                                .font(.caption2)
+                                .foregroundColor(Color.theme.accentRed)
+                                .transition(.opacity.combined(with: .move(edge: .top)))
+                        }
+                    }
+                    .animation(.easeInOut(duration: 0.18), value: viewModel.nameError)
 
                     CitySelectionView(
                         label: "City",
@@ -32,6 +47,7 @@ struct CreateTeamView: View {
                     FormField(label: "Home Venue (optional)", text: $viewModel.homeVenue, placeholder: "e.g. City Pool Hall", icon: "building.2")
                 }
 
+                // API error
                 if let error = viewModel.errorMessage {
                     HStack(spacing: 6) {
                         Image(systemName: "exclamationmark.circle.fill")
@@ -40,6 +56,7 @@ struct CreateTeamView: View {
                             .font(.caption)
                     }
                     .foregroundColor(Color.theme.accentRed)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
 
                 Button {
@@ -61,7 +78,9 @@ struct CreateTeamView: View {
                     }
                     .primaryButton()
                 }
-                .disabled(viewModel.isLoading || viewModel.name.isEmpty)
+                .disabled(!viewModel.isValid || viewModel.isLoading)
+                .opacity(!viewModel.isValid ? 0.5 : 1)
+                .animation(.easeInOut(duration: 0.18), value: viewModel.isValid)
             }
             .padding(20)
         }

@@ -1,8 +1,49 @@
-import { eq, and, sql } from 'drizzle-orm';
+import { eq, and, sql, inArray } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { Services } from '../utils/helpers';
-import { competitions, teams, teamMembers, notifications } from '../db/schema';
+import { competitions, teams, teamMembers, notifications, users } from '../db/schema';
 import { AppError } from '../utils/errors';
+import { markUserNotificationsActioned } from './notification.service';
+
+async function checkPlayerOverlap(
+  db: Services['db'],
+  competitionId: string,
+  excludeTeamId: string,
+  memberPlayerIds: string[]
+) {
+  const participations = await db.select().from(teamMembers)
+    .where(eq(teamMembers.competitionId, competitionId))
+    .all();
+  const otherTeamIds = participations
+    .filter(p => p.teamId !== excludeTeamId && ['accepted', 'pending', 'invited'].includes(p.status))
+    .map(p => p.teamId);
+  if (otherTeamIds.length === 0) return;
+
+  const otherTeams = await db.select().from(teams)
+    .where(inArray(teams.id, otherTeamIds)).all();
+
+  const playerTeamMap = new Map<string, string>();
+  for (const t of otherTeams) {
+    for (const m of t.members) playerTeamMap.set(m.playerId, t.name);
+  }
+
+  for (const pid of memberPlayerIds) {
+    const conflict = playerTeamMap.get(pid);
+    if (conflict) {
+      const user = await db.select().from(users).where(eq(users.id, pid)).get();
+      const name = user?.name ?? user?.nickname ?? 'A player';
+      throw AppError.badRequest(`${name} is already on "${conflict}" in this competition`);
+    }
+  }
+}
+
+async function resolvePlayerNames(db: Services['db'], members: { playerId: string }[]) {
+  const userIds = members.map(m => m.playerId);
+  if (userIds.length === 0) return new Map<string, string>();
+  const playerUsers = await db.select({ id: users.id, name: users.name }).from(users)
+    .where(inArray(users.id, userIds)).all();
+  return new Map(playerUsers.map(u => [u.id, u.name ?? u.id]));
+}
 
 export async function applyToCompetition(
   services: Services,
@@ -33,6 +74,9 @@ export async function applyToCompetition(
     throw AppError.conflict('Team has already applied');
   }
 
+  await checkPlayerOverlap(db, competitionId, teamId, team.members.map(m => m.playerId));
+
+  const nameMap = await resolvePlayerNames(db, team.members);
   const now = Date.now();
   return db.insert(teamMembers).values({
     id: nanoid(),
@@ -43,7 +87,7 @@ export async function applyToCompetition(
     homeVenue: team.homeVenue,
     roster: team.members.map(m => ({
       playerId: m.playerId,
-      name: m.playerId, // Will be resolved at display time
+      name: nameMap.get(m.playerId) ?? m.playerId,
     })),
     createdAt: now,
     updatedAt: now,
@@ -70,6 +114,11 @@ export async function handleApplication(
   const app = apps[0];
   if (app.status !== 'pending') throw AppError.badRequest('Application already handled');
 
+  const team = await db.select().from(teams).where(eq(teams.id, teamId)).get();
+  if (action === 'accept' && team) {
+    await checkPlayerOverlap(db, competitionId, teamId, team.members.map(m => m.playerId));
+  }
+
   const newStatus = action === 'accept' ? 'accepted' : 'rejected';
   const updated = await db.update(teamMembers)
     .set({ status: newStatus, updatedAt: Date.now() })
@@ -77,7 +126,6 @@ export async function handleApplication(
     .returning().get();
 
   // Notify team captain
-  const team = await db.select().from(teams).where(eq(teams.id, teamId)).get();
   if (team) {
     const now = Date.now();
     await db.insert(notifications).values({
@@ -144,6 +192,10 @@ export async function respondToCompetitionInvite(
   const app = apps[0];
   if (app.status !== 'invited') throw AppError.badRequest('No pending invitation');
 
+  if (accept) {
+    await checkPlayerOverlap(db, competitionId, teamId, team.members.map(m => m.playerId));
+  }
+
   const newStatus = accept ? 'accepted' : 'declined';
   const updated = await db.update(teamMembers)
     .set({ status: newStatus, updatedAt: Date.now() })
@@ -168,6 +220,7 @@ export async function respondToCompetitionInvite(
     });
   }
 
+  await markUserNotificationsActioned(services, userId, competitionId, 'competition', ['competition_invitation']);
   return updated;
 }
 
@@ -189,6 +242,28 @@ export async function getTeamCompetitionInvitations(services: Services, userId: 
   }
 
   return invitations;
+}
+
+export async function withdrawApplication(
+  services: Services,
+  competitionId: string,
+  teamId: string,
+  userId: string
+) {
+  const { db } = services;
+  const team = await db.select().from(teams).where(eq(teams.id, teamId)).get();
+  if (!team) throw AppError.notFound('Team not found');
+  if (team.captainId !== userId) throw AppError.forbidden('Only team captain can withdraw application');
+
+  const apps = await db.select().from(teamMembers)
+    .where(and(eq(teamMembers.competitionId, competitionId), eq(teamMembers.teamId, teamId)))
+    .all();
+  if (apps.length === 0) throw AppError.notFound('Application not found');
+
+  const app = apps[0];
+  if (app.status !== 'pending') throw AppError.badRequest('Application is not pending');
+
+  await db.delete(teamMembers).where(eq(teamMembers.id, app.id));
 }
 
 export async function withdrawInvitation(
@@ -302,6 +377,9 @@ export async function inviteTeamToCompetition(
     throw AppError.conflict('Team is already in this competition');
   }
 
+  await checkPlayerOverlap(db, competitionId, teamId, team.members.map(m => m.playerId));
+
+  const nameMap = await resolvePlayerNames(db, team.members);
   const now = Date.now();
   const participation = await db.insert(teamMembers).values({
     id: nanoid(),
@@ -312,7 +390,7 @@ export async function inviteTeamToCompetition(
     homeVenue: team.homeVenue,
     roster: team.members.map(m => ({
       playerId: m.playerId,
-      name: m.playerId,
+      name: nameMap.get(m.playerId) ?? m.playerId,
     })),
     createdAt: now,
     updatedAt: now,

@@ -5,7 +5,10 @@ struct TeamDetailView: View {
     @Bindable var appState: AppState
     @State private var viewModel = TeamDetailViewModel()
     @State private var showInviteSheet = false
+    @State private var showEditNameSheet = false
+    @State private var showDeleteConfirm = false
     @State private var visibleMembersCount = 10
+    @Environment(\.dismiss) private var dismiss
     private let memberPageSize = 10
 
     var isCaptain: Bool {
@@ -137,6 +140,49 @@ struct TeamDetailView: View {
                         memberLoadMoreFooter(totalCount: team.members.count)
                     }
                     .cardStyle()
+
+                    // Pending Invites (captain only)
+                    if isCaptain && !viewModel.sentInvitations.isEmpty {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Pending Invites")
+                                .sectionHeader()
+
+                            ForEach(viewModel.sentInvitations) { invitation in
+                                HStack(spacing: 12) {
+                                    ZStack {
+                                        Circle()
+                                            .fill(Color.theme.accent.opacity(0.15))
+                                            .frame(width: 36, height: 36)
+                                        Image(systemName: "envelope")
+                                            .font(.caption)
+                                            .foregroundColor(Color.theme.accent)
+                                    }
+
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(invitation.invitedEmail ?? "Unknown")
+                                            .font(.subheadline)
+                                            .foregroundColor(Color.theme.textPrimary)
+                                            .lineLimit(1)
+                                        Text(invitation.createdAt.displayDate)
+                                            .font(.caption2)
+                                            .foregroundColor(Color.theme.textTertiary)
+                                    }
+
+                                    Spacer()
+
+                                    Text(invitation.status.capitalized)
+                                        .font(.caption2)
+                                        .fontWeight(.semibold)
+                                        .foregroundColor(invitationStatusColor(invitation.status))
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 3)
+                                        .background(invitationStatusColor(invitation.status).opacity(0.12))
+                                        .clipShape(Capsule())
+                                }
+                            }
+                        }
+                        .cardStyle()
+                    }
                 }
                 .padding()
             } else if viewModel.isLoading {
@@ -153,8 +199,61 @@ struct TeamDetailView: View {
         .navigationDestination(for: TeamMember.self) { member in
             UserProfileView(userId: member.playerId)
         }
-        .sheet(isPresented: $showInviteSheet) {
+        .toolbar {
+            if isCaptain {
+                ToolbarItem(placement: .primaryAction) {
+                    Menu {
+                        Button {
+                            showEditNameSheet = true
+                        } label: {
+                            Label("Edit Team Name", systemImage: "pencil")
+                        }
+
+                        Divider()
+
+                        Button(role: .destructive) {
+                            showDeleteConfirm = true
+                        } label: {
+                            Label("Delete Team", systemImage: "trash")
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
+                            .font(.subheadline.weight(.semibold))
+                    }
+                }
+            }
+        }
+        .sheet(isPresented: $showInviteSheet, onDismiss: {
+            Task { await viewModel.load(teamId) }
+        }) {
             InvitePlayerSheet(viewModel: viewModel)
+        }
+        .sheet(isPresented: $showEditNameSheet) {
+            EditTeamNameSheet(viewModel: viewModel)
+        }
+        .confirmationDialog(
+            "Delete \(viewModel.team?.name ?? "Team")?",
+            isPresented: $showDeleteConfirm,
+            titleVisibility: .visible
+        ) {
+            Button("Delete Team", role: .destructive) {
+                Task {
+                    if await viewModel.deleteTeam() {
+                        dismiss()
+                    }
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This will permanently delete the team and remove all members. This cannot be undone.")
+        }
+        .alert("Error", isPresented: .init(
+            get: { viewModel.errorMessage != nil },
+            set: { if !$0 { viewModel.errorMessage = nil } }
+        )) {
+            Button("OK") { viewModel.errorMessage = nil }
+        } message: {
+            Text(viewModel.errorMessage ?? "")
         }
         .refreshable {
             visibleMembersCount = memberPageSize
@@ -166,6 +265,14 @@ struct TeamDetailView: View {
         }
         .onAppear {
             Task { await viewModel.load(teamId) }
+        }
+    }
+
+    private func invitationStatusColor(_ status: String) -> Color {
+        switch status {
+        case "accepted": Color.theme.accentGreen
+        case "rejected": Color.theme.accentRed
+        default: Color.theme.accentYellow
         }
     }
 

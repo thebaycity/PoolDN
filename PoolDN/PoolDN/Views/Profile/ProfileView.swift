@@ -10,6 +10,7 @@ struct ProfileView: View {
     @State private var showCropView = false
     @State private var selectedImage: UIImage?
     @State private var showFullAvatar = false
+    @State private var showLogoutConfirmation = false
 
     var body: some View {
         ScrollView {
@@ -305,10 +306,18 @@ struct ProfileView: View {
         }
 
         Button {
-            appState.logout()
+            showLogoutConfirmation = true
         } label: {
             Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
                 .destructiveButton()
+        }
+        .confirmationDialog("Sign Out", isPresented: $showLogoutConfirmation, titleVisibility: .visible) {
+            Button("Sign Out", role: .destructive) {
+                appState.logout()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Are you sure you want to sign out?")
         }
     }
 

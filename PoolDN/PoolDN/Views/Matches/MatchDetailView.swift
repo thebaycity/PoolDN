@@ -3,6 +3,8 @@ import SwiftUI
 struct MatchDetailView: View {
     let match: Match
     @Bindable var appState: AppState
+    var gameStructure: [GameDefinition]? = nil
+    var participations: [TeamParticipation] = []
     @State private var showSubmitSheet = false
 
     private var userId: String? { appState.currentUser?.id }
@@ -23,6 +25,14 @@ struct MatchDetailView: View {
             return "Update Score"
         }
         return "Submit Result"
+    }
+
+    private var homeRoster: [RosterPlayer] {
+        participations.first(where: { $0.teamId == match.homeTeamId })?.roster ?? []
+    }
+
+    private var awayRoster: [RosterPlayer] {
+        participations.first(where: { $0.teamId == match.awayTeamId })?.roster ?? []
     }
 
     private var canSubmit: Bool {
@@ -194,7 +204,12 @@ struct MatchDetailView: View {
         .navigationTitle("Match Details")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showSubmitSheet) {
-            SubmitResultSheet(match: match)
+            SubmitResultSheet(
+                match: match,
+                gameStructure: gameStructure,
+                homeRoster: homeRoster,
+                awayRoster: awayRoster
+            )
         }
     }
 

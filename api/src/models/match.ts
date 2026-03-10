@@ -16,6 +16,8 @@ export const gameResultSchema = z.object({
   gameOrder: z.number(),
   homePlayerName: z.string().optional(),
   awayPlayerName: z.string().optional(),
+  homePlayerId: z.string().optional(),
+  awayPlayerId: z.string().optional(),
   homeScore: z.number().default(0),
   awayScore: z.number().default(0),
 });

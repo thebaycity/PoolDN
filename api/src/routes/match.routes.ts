@@ -21,14 +21,17 @@ matches.get('/competitions/:competitionId/matches', async (c) => {
     limit,
     offset
   );
-  return c.json(results);
+  return c.json({
+    ...results,
+    data: results.data.map(matchService.transformMatch),
+  });
 });
 
 // Get single match
 matches.get('/:id', async (c) => {
   const services = createServices(c);
   const match = await matchService.getMatch(services, c.req.param('id'));
-  return c.json(match);
+  return c.json(matchService.transformMatch(match));
 });
 
 // Submit result

@@ -6,6 +6,8 @@ struct CompetitionAboutTab: View {
     @Bindable var viewModel: CompetitionDetailViewModel
     @Bindable var appState: AppState
     @State private var showCompleteConfirmation = false
+    @State private var showPublishConfirmation = false
+    @State private var showEditSheet = false
 
     var body: some View {
         ScrollView {
@@ -26,7 +28,23 @@ struct CompetitionAboutTab: View {
                             }
                         }
                         Spacer()
-                        StatusBadge.forCompetition(competition.status)
+                        VStack(alignment: .trailing, spacing: 8) {
+                            StatusBadge.forCompetition(competition.status)
+                            if isOrganizer && (competition.status == .draft || competition.status == .upcoming) {
+                                Button {
+                                    showEditSheet = true
+                                } label: {
+                                    Label("Edit", systemImage: "pencil")
+                                        .font(.caption.weight(.semibold))
+                                        .foregroundColor(Color.theme.accent)
+                                        .padding(.horizontal, 10)
+                                        .padding(.vertical, 5)
+                                        .background(Color.theme.accent.opacity(0.1))
+                                        .clipShape(Capsule())
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
                     }
 
                     Divider().overlay(Color.theme.separator)
@@ -126,6 +144,9 @@ struct CompetitionAboutTab: View {
             }
             .padding()
         }
+        .sheet(isPresented: $showEditSheet) {
+            EditCompetitionView(competition: competition, detailViewModel: viewModel)
+        }
     }
 
     @ViewBuilder
@@ -144,10 +165,18 @@ struct CompetitionAboutTab: View {
                     .foregroundColor(Color.theme.textSecondary)
 
                 Button {
-                    Task { await viewModel.publish() }
+                    showPublishConfirmation = true
                 } label: {
                     Text("Publish Competition")
                         .primaryButton()
+                }
+                .confirmationDialog("Publish Competition?", isPresented: $showPublishConfirmation, titleVisibility: .visible) {
+                    Button("Publish") {
+                        Task { await viewModel.publish() }
+                    }
+                    Button("Cancel", role: .cancel) {}
+                } message: {
+                    Text("This will make the competition visible and open for team registration.")
                 }
 
             case .upcoming:

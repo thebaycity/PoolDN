@@ -83,6 +83,21 @@ participations.post(
   }
 );
 
+// Withdraw application (team captain)
+participations.delete(
+  '/competitions/:competitionId/applications/:teamId',
+  async (c) => {
+    const services = createServices(c);
+    await participationService.withdrawApplication(
+      services,
+      c.req.param('competitionId'),
+      c.req.param('teamId'),
+      c.get('userId')
+    );
+    return c.json({ message: 'Application withdrawn' });
+  }
+);
+
 // Withdraw invitation (organizer only)
 participations.delete(
   '/competitions/:competitionId/invitations/:teamId',

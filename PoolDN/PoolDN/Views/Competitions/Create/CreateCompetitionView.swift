@@ -72,7 +72,7 @@ struct CreateCompetitionView: View {
                         }
                     } label: {
                         VStack(spacing: 5) {
-                            ZStack {
+                            ZStack(alignment: .topTrailing) {
                                 Circle()
                                     .fill(isDone ? Color.theme.accentGreen :
                                           isCurrent ? Color.theme.accent :
@@ -87,6 +87,14 @@ struct CreateCompetitionView: View {
                                     Image(systemName: step.icon)
                                         .font(.caption2)
                                         .foregroundColor(isCurrent ? .white : Color.theme.textTertiary)
+                                }
+
+                                // Error badge
+                                if isDone && !viewModel.validationErrors(for: index).isEmpty {
+                                    Circle()
+                                        .fill(Color.theme.accentRed)
+                                        .frame(width: 8, height: 8)
+                                        .offset(x: 2, y: -2)
                                 }
                             }
 
@@ -133,52 +141,85 @@ struct CreateCompetitionView: View {
     // MARK: - Navigation Bar
 
     private var navBar: some View {
-        HStack(spacing: 12) {
-            if viewModel.currentStep > 0 {
-                Button {
-                    withAnimation(.easeInOut(duration: 0.25)) { viewModel.currentStep -= 1 }
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: "chevron.left").font(.caption.bold())
-                        Text("Back")
+        VStack(spacing: 0) {
+            // Inline validation hint when blocked
+            if !viewModel.canProceedFromCurrentStep {
+                let errors = viewModel.validationErrors(for: viewModel.currentStep)
+                if let first = errors.first {
+                    HStack(spacing: 6) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.caption2)
+                            .foregroundColor(Color.theme.accentRed)
+                        Text(first)
+                            .font(.caption2)
+                            .foregroundColor(Color.theme.accentRed)
+                        Spacer()
                     }
-                    .secondaryButton()
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(Color.theme.accentRed.opacity(0.06))
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
-                .frame(maxWidth: 110)
             }
 
-            if viewModel.currentStep < steps.count - 1 {
-                Button {
-                    withAnimation(.easeInOut(duration: 0.25)) { viewModel.currentStep += 1 }
-                } label: {
-                    HStack(spacing: 4) {
-                        Text("Next")
-                        Image(systemName: "chevron.right").font(.caption.bold())
-                    }
-                    .primaryButton()
-                }
-            } else {
-                Button {
-                    Task {
-                        if await viewModel.createAndPublish() != nil {
-                            dismiss()
+            Divider().overlay(Color.theme.separator)
+
+            HStack(spacing: 12) {
+                if viewModel.currentStep > 0 {
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.25)) { viewModel.currentStep -= 1 }
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "chevron.left").font(.caption.bold())
+                            Text("Back")
                         }
+                        .secondaryButton()
                     }
-                } label: {
-                    Group {
-                        if viewModel.isLoading {
-                            ProgressView().tint(.white)
-                        } else {
-                            Label("Publish Competition", systemImage: "checkmark.circle.fill")
-                        }
-                    }
-                    .primaryButton()
+                    .frame(maxWidth: 110)
                 }
-                .disabled(viewModel.isLoading || viewModel.name.isEmpty)
+
+                if viewModel.currentStep < steps.count - 1 {
+                    let canNext = viewModel.canProceedFromCurrentStep
+                    Button {
+                        guard canNext else { return }
+                        withAnimation(.easeInOut(duration: 0.25)) { viewModel.currentStep += 1 }
+                    } label: {
+                        HStack(spacing: 4) {
+                            Text("Next")
+                            Image(systemName: "chevron.right").font(.caption.bold())
+                        }
+                        .primaryButton()
+                    }
+                    .disabled(!canNext)
+                    .opacity(canNext ? 1 : 0.45)
+                    .animation(.easeInOut(duration: 0.18), value: canNext)
+                } else {
+                    let canPublish = viewModel.isReadyToPublish
+                    Button {
+                        Task {
+                            if await viewModel.createAndPublish() != nil {
+                                dismiss()
+                            }
+                        }
+                    } label: {
+                        Group {
+                            if viewModel.isLoading {
+                                ProgressView().tint(.white)
+                            } else {
+                                Label("Publish Competition", systemImage: "checkmark.circle.fill")
+                            }
+                        }
+                        .primaryButton()
+                    }
+                    .disabled(viewModel.isLoading || !canPublish)
+                    .opacity(!canPublish ? 0.45 : 1)
+                    .animation(.easeInOut(duration: 0.18), value: canPublish)
+                }
             }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(Color.theme.surface)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(Color.theme.surface)
+        .animation(.easeInOut(duration: 0.2), value: viewModel.canProceedFromCurrentStep)
     }
 }

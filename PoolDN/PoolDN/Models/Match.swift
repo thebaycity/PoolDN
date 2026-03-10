@@ -7,10 +7,12 @@ enum MatchStatus: String, Codable {
     case completed
 }
 
-struct GameResult: Codable {
+struct GameResult: Codable, Equatable {
     let gameOrder: Int
     let homePlayerName: String?
     let awayPlayerName: String?
+    let homePlayerId: String?
+    let awayPlayerId: String?
     let homeScore: Int
     let awayScore: Int
 }

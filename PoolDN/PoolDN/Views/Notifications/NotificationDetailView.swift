@@ -3,9 +3,18 @@ import SwiftUI
 struct NotificationDetailView: View {
     let notification: AppNotification
     let onDismiss: () -> Void
+    var onRespondToInvitation: ((String, String, Bool) async -> Void)?
     @State private var isLoading = false
     @State private var errorMessage: String?
-    @State private var isCompleted = false
+    @State private var isCompleted: Bool
+    @State private var showDeclineConfirmation = false
+
+    init(notification: AppNotification, onDismiss: @escaping () -> Void, onRespondToInvitation: ((String, String, Bool) async -> Void)? = nil) {
+        self.notification = notification
+        self.onDismiss = onDismiss
+        self.onRespondToInvitation = onRespondToInvitation
+        self._isCompleted = State(initialValue: notification.actioned)
+    }
 
     private var meta: NotificationMetadata? { notification.decodedMetadata }
 
@@ -56,7 +65,7 @@ struct NotificationDetailView: View {
                     } else {
                         HStack(spacing: 6) {
                             Image(systemName: "checkmark.circle.fill")
-                            Text("Done")
+                            Text(notification.actioned ? "Already Completed" : "Done")
                         }
                         .font(.subheadline.weight(.semibold))
                         .foregroundColor(Color.theme.accentGreen)
@@ -196,7 +205,7 @@ struct NotificationDetailView: View {
         case "competition_invitation":
             HStack(spacing: 12) {
                 Button {
-                    respondToInvitation(accept: false)
+                    showDeclineConfirmation = true
                 } label: {
                     HStack(spacing: 6) {
                         Image(systemName: "xmark")
@@ -208,6 +217,14 @@ struct NotificationDetailView: View {
                     .padding(.vertical, 14)
                     .background(Color.theme.accentRed.opacity(0.12))
                     .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                }
+                .confirmationDialog("Decline Invitation?", isPresented: $showDeclineConfirmation, titleVisibility: .visible) {
+                    Button("Decline", role: .destructive) {
+                        respondToInvitation(accept: false)
+                    }
+                    Button("Cancel", role: .cancel) {}
+                } message: {
+                    Text("Are you sure you want to decline this competition invitation?")
                 }
 
                 Button {
@@ -295,7 +312,11 @@ struct NotificationDetailView: View {
         errorMessage = nil
         Task {
             do {
-                _ = try await CompetitionService.respondToInvitation(competitionId: competitionId, teamId: teamId, accept: accept)
+                if let callback = onRespondToInvitation {
+                    await callback(competitionId, teamId, accept)
+                } else {
+                    _ = try await CompetitionService.respondToInvitation(competitionId: competitionId, teamId: teamId, accept: accept)
+                }
                 isCompleted = true
                 isLoading = false
                 try? await Task.sleep(for: .seconds(1))

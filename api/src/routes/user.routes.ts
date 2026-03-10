@@ -47,8 +47,12 @@ userRoutes.get('/:id/teams', async (c) => {
 
 userRoutes.get('/:id/stats', async (c) => {
   const services = createServices(c);
-  const stats = await userService.getUserStats(services, c.req.param('id'));
-  return c.json(stats);
+  const id = c.req.param('id');
+  const [stats, gameStats] = await Promise.all([
+    userService.getUserStats(services, id),
+    userService.getUserGameStats(services, id),
+  ]);
+  return c.json({ ...stats, ...gameStats });
 });
 
 userRoutes.post('/:id/avatar', async (c) => {

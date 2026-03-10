@@ -19,6 +19,7 @@ struct CompetitionDetailView: View {
            comp.status == .active || comp.status == .completed {
             items.append(("Matches", "sportscourt"))
             items.append(("Standings", "list.number"))
+            items.append(("Players", "person.text.rectangle"))
         }
         return items
     }
@@ -82,6 +83,8 @@ struct CompetitionDetailView: View {
                         hasMore: viewModel.hasMoreMatches,
                         isLoadingMore: viewModel.isLoadingMoreMatches,
                         appState: appState,
+                        gameStructure: comp.gameStructure,
+                        participations: viewModel.participations,
                         onLoadMore: { await viewModel.loadMoreMatches() }
                     )
                 case 3:
@@ -92,6 +95,11 @@ struct CompetitionDetailView: View {
                                 p.roster?.contains(where: { $0.playerId == appState.currentUser?.id }) == true
                             }
                             .map(\.teamId)
+                    )
+                case 4:
+                    CompetitionPlayersTab(
+                        playerRatings: viewModel.playerRatings,
+                        currentPlayerId: appState.currentUser?.id
                     )
                 default:
                     EmptyView()

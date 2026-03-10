@@ -6,6 +6,7 @@ class CompetitionDetailViewModel {
     var participations: [TeamParticipation] = []
     var matches: [Match] = []
     var standings: [Standing] = []
+    var playerRatings: [PlayerRating] = []
     var isLoading = false
     var errorMessage: String?
     var actionMessage: String?
@@ -40,6 +41,7 @@ class CompetitionDetailViewModel {
                 hasMoreMatches = matchPage.hasMore
                 matchOffset = matchPage.data.count
                 standings = try await StandingsService.getStandings(id)
+                playerRatings = try await PlayerRatingService.getPlayerRatings(id)
             }
             isLoading = false
         } catch {
@@ -129,6 +131,17 @@ class CompetitionDetailViewModel {
         }
     }
 
+    func withdrawApplication(teamId: String) async {
+        guard let id = competition?.id else { return }
+        do {
+            try await CompetitionService.withdrawApplication(competitionId: id, teamId: teamId)
+            actionMessage = "Application withdrawn"
+            await load(id)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
     func withdrawInvitation(teamId: String) async {
         guard let id = competition?.id else { return }
         do {
@@ -177,5 +190,11 @@ class CompetitionDetailViewModel {
 enum StandingsService {
     static func getStandings(_ competitionId: String) async throws -> [Standing] {
         try await APIClient.shared.get("/competitions/\(competitionId)/standings")
+    }
+}
+
+enum PlayerRatingService {
+    static func getPlayerRatings(_ competitionId: String) async throws -> [PlayerRating] {
+        try await APIClient.shared.get("/competitions/\(competitionId)/player-ratings")
     }
 }

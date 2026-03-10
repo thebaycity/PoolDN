@@ -15,6 +15,10 @@ struct CompetitionTeamsTab: View {
     @State private var selectedTab = 0
     @State private var teamToWithdraw: TeamParticipation?
     @State private var teamToRemove: TeamParticipation?
+    @State private var showGenerateConfirmation = false
+    @State private var inviteToDecline: TeamParticipation?
+    @State private var appToReject: TeamParticipation?
+    @State private var appToWithdraw: TeamParticipation?
 
     var acceptedTeams: [TeamParticipation] {
         participations.filter { $0.status == "accepted" }
@@ -32,6 +36,13 @@ struct CompetitionTeamsTab: View {
         guard let userId = appState.currentUser?.id else { return [] }
         return invitedTeams.filter { invite in
             myTeams.contains(where: { $0.id == invite.teamId && $0.captainId == userId })
+        }
+    }
+
+    var myPendingApplications: [TeamParticipation] {
+        guard let userId = appState.currentUser?.id else { return [] }
+        return pendingTeams.filter { app in
+            myTeams.contains(where: { $0.id == app.teamId && $0.captainId == userId })
         }
     }
 
@@ -77,12 +88,20 @@ struct CompetitionTeamsTab: View {
                             .foregroundColor(Color.theme.textSecondary)
 
                         Button {
-                            Task { await viewModel.closeAndGenerate() }
+                            showGenerateConfirmation = true
                         } label: {
                             Text("Close & Generate Matches")
                                 .primaryButton()
                         }
                         .disabled(acceptedTeams.count < 2)
+                        .confirmationDialog("Generate Matches", isPresented: $showGenerateConfirmation, titleVisibility: .visible) {
+                            Button("Close & Generate") {
+                                Task { await viewModel.closeAndGenerate() }
+                            }
+                            Button("Cancel", role: .cancel) {}
+                        } message: {
+                            Text("This will close applications and generate the match schedule. This action cannot be undone.")
+                        }
                     }
                     .cardStyle()
                 }
@@ -135,7 +154,7 @@ struct CompetitionTeamsTab: View {
                             .sectionHeader()
 
                         ForEach(myInvitations) { invite in
-                            HStack(spacing: 12) {
+                            VStack(spacing: 12) {
                                 NavigationLink {
                                     TeamDetailView(teamId: invite.teamId, appState: appState)
                                 } label: {
@@ -158,39 +177,47 @@ struct CompetitionTeamsTab: View {
                                                 .font(.caption)
                                                 .foregroundColor(Color.theme.textSecondary)
                                         }
+
+                                        Spacer()
+
+                                        Image(systemName: "chevron.right")
+                                            .font(.caption2)
+                                            .foregroundColor(Color.theme.textTertiary)
                                     }
                                 }
                                 .buttonStyle(.plain)
 
-                                Spacer()
-
                                 Button {
                                     Task { await viewModel.respondToInvitation(teamId: invite.teamId, accept: true) }
                                 } label: {
-                                    Text("Accept")
-                                        .font(.caption)
-                                        .fontWeight(.semibold)
-                                        .foregroundColor(.white)
-                                        .padding(.horizontal, 12)
-                                        .padding(.vertical, 6)
-                                        .background(Color.theme.accentGreen)
-                                        .clipShape(Capsule())
+                                    HStack(spacing: 6) {
+                                        Image(systemName: "checkmark")
+                                        Text("Accept")
+                                    }
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundColor(.white)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 12)
+                                    .background(Color.theme.accentGreen)
+                                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                                 }
 
                                 Button {
-                                    Task { await viewModel.respondToInvitation(teamId: invite.teamId, accept: false) }
+                                    inviteToDecline = invite
                                 } label: {
-                                    Text("Decline")
-                                        .font(.caption)
-                                        .fontWeight(.semibold)
-                                        .foregroundColor(Color.theme.accentRed)
-                                        .padding(.horizontal, 12)
-                                        .padding(.vertical, 6)
-                                        .background(Color.theme.accentRed.opacity(0.12))
-                                        .clipShape(Capsule())
+                                    HStack(spacing: 6) {
+                                        Image(systemName: "xmark")
+                                        Text("Decline")
+                                    }
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundColor(Color.theme.accentRed)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 12)
+                                    .background(Color.theme.accentRed.opacity(0.12))
+                                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                                 }
                             }
-                            .padding(12)
+                            .padding(14)
                             .background(Color.theme.surface)
                             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                             .overlay(
@@ -264,7 +291,55 @@ struct CompetitionTeamsTab: View {
                     }
                 }
 
-                // Pending Applications
+                // Application Pending status card (player view)
+                if showPendingSection && !isOrganizer && !myPendingApplications.isEmpty {
+                    VStack(alignment: .leading, spacing: 12) {
+                        ForEach(myPendingApplications) { app in
+                            VStack(spacing: 12) {
+                                HStack(spacing: 10) {
+                                    ZStack {
+                                        Circle()
+                                            .fill(Color.theme.accentYellow.opacity(0.15))
+                                            .frame(width: 40, height: 40)
+                                        Image(systemName: "clock")
+                                            .font(.subheadline)
+                                            .foregroundColor(Color.theme.accentYellow)
+                                    }
+
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text("Application Pending")
+                                            .font(.subheadline.weight(.semibold))
+                                            .foregroundColor(Color.theme.textPrimary)
+                                        Text("Your team \(app.teamName) has applied. Waiting for organizer approval.")
+                                            .font(.caption)
+                                            .foregroundColor(Color.theme.textSecondary)
+                                    }
+                                }
+
+                                Button {
+                                    appToWithdraw = app
+                                } label: {
+                                    Text("Withdraw Application")
+                                        .font(.subheadline.weight(.semibold))
+                                        .foregroundColor(Color.theme.accentRed)
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 12)
+                                        .background(Color.theme.accentRed.opacity(0.12))
+                                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                                }
+                            }
+                            .padding(14)
+                            .background(Color.theme.surface)
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                    .strokeBorder(Color.theme.accentYellow.opacity(0.3), lineWidth: 0.5)
+                            )
+                        }
+                    }
+                }
+
+                // Pending Applications (organizer view)
                 if showPendingSection && isOrganizer && !pendingTeams.isEmpty {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Pending Applications")
@@ -306,17 +381,25 @@ struct CompetitionTeamsTab: View {
                                 Button {
                                     Task { await viewModel.handleApplication(teamId: app.teamId, accept: true) }
                                 } label: {
-                                    Image(systemName: "checkmark.circle.fill")
-                                        .font(.title3)
-                                        .foregroundColor(Color.theme.accentGreen)
+                                    Text("Accept")
+                                        .font(.caption.weight(.semibold))
+                                        .foregroundColor(.white)
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 6)
+                                        .background(Color.theme.accentGreen)
+                                        .clipShape(Capsule())
                                 }
 
                                 Button {
-                                    Task { await viewModel.handleApplication(teamId: app.teamId, accept: false) }
+                                    appToReject = app
                                 } label: {
-                                    Image(systemName: "xmark.circle.fill")
-                                        .font(.title3)
+                                    Text("Reject")
+                                        .font(.caption.weight(.semibold))
                                         .foregroundColor(Color.theme.accentRed)
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 6)
+                                        .background(Color.theme.accentRed.opacity(0.12))
+                                        .clipShape(Capsule())
                                 }
                             }
                             .padding(12)
@@ -354,63 +437,52 @@ struct CompetitionTeamsTab: View {
                                 .padding(.vertical, 8)
                         } else {
                             ForEach(acceptedTeams) { team in
-                                HStack(spacing: 12) {
-                                    NavigationLink {
-                                        TeamDetailView(teamId: team.teamId, appState: appState)
-                                    } label: {
-                                        HStack(spacing: 12) {
-                                            ZStack {
-                                                Circle()
-                                                    .fill(Color.theme.accent.opacity(0.15))
-                                                    .frame(width: 40, height: 40)
-                                                Text(String(team.teamName.prefix(2)).uppercased())
-                                                    .font(.caption)
-                                                    .fontWeight(.bold)
-                                                    .foregroundColor(Color.theme.accent)
-                                            }
+                                NavigationLink {
+                                    TeamDetailView(teamId: team.teamId, appState: appState)
+                                } label: {
+                                    HStack(spacing: 12) {
+                                        ZStack {
+                                            Circle()
+                                                .fill(Color.theme.accent.opacity(0.15))
+                                                .frame(width: 40, height: 40)
+                                            Text(String(team.teamName.prefix(2)).uppercased())
+                                                .font(.caption)
+                                                .fontWeight(.bold)
+                                                .foregroundColor(Color.theme.accent)
+                                        }
 
-                                            VStack(alignment: .leading, spacing: 2) {
-                                                Text(team.teamName)
-                                                    .font(.subheadline)
-                                                    .fontWeight(.medium)
-                                                    .foregroundColor(Color.theme.textPrimary)
-                                                HStack(spacing: 8) {
-                                                    if let roster = team.roster {
-                                                        Label("\(roster.count)", systemImage: "person.2")
-                                                            .font(.caption)
-                                                            .foregroundColor(Color.theme.textSecondary)
-                                                    }
-                                                    if let venue = team.homeVenue {
-                                                        Label(venue, systemImage: "building.2")
-                                                            .font(.caption)
-                                                            .foregroundColor(Color.theme.textSecondary)
-                                                    }
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text(team.teamName)
+                                                .font(.subheadline)
+                                                .fontWeight(.medium)
+                                                .foregroundColor(Color.theme.textPrimary)
+                                            HStack(spacing: 8) {
+                                                if let roster = team.roster {
+                                                    Label("\(roster.count)", systemImage: "person.2")
+                                                        .font(.caption)
+                                                        .foregroundColor(Color.theme.textSecondary)
+                                                }
+                                                if let venue = team.homeVenue {
+                                                    Label(venue, systemImage: "building.2")
+                                                        .font(.caption)
+                                                        .foregroundColor(Color.theme.textSecondary)
                                                 }
                                             }
                                         }
-                                    }
-                                    .buttonStyle(.plain)
 
-                                    Spacer()
+                                        Spacer(minLength: 0)
 
-                                    Image(systemName: "checkmark.seal.fill")
-                                        .foregroundColor(Color.theme.accentGreen)
-                                        .font(.subheadline)
+                                        Image(systemName: "checkmark.seal.fill")
+                                            .foregroundColor(Color.theme.accentGreen)
+                                            .font(.subheadline)
 
-                                    if isOrganizer && (competition.status == .upcoming || competition.status == .active) {
-                                        Button {
-                                            teamToRemove = team
-                                        } label: {
-                                            Image(systemName: "xmark.circle.fill")
-                                                .font(.title3)
-                                                .foregroundColor(Color.theme.accentRed)
-                                        }
-                                    } else {
                                         Image(systemName: "chevron.right")
                                             .font(.caption2)
                                             .foregroundColor(Color.theme.textTertiary)
                                     }
+                                    .frame(maxWidth: .infinity)
                                 }
+                                .buttonStyle(.plain)
                                 .padding(12)
                                 .background(Color.theme.surface)
                                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
@@ -418,6 +490,15 @@ struct CompetitionTeamsTab: View {
                                     RoundedRectangle(cornerRadius: 12, style: .continuous)
                                         .strokeBorder(Color.theme.border, lineWidth: 0.5)
                                 )
+                                .contextMenu {
+                                    if isOrganizer && (competition.status == .upcoming || competition.status == .active) {
+                                        Button(role: .destructive) {
+                                            teamToRemove = team
+                                        } label: {
+                                            Label("Remove Team", systemImage: "trash")
+                                        }
+                                    }
+                                }
                                 .onAppear {
                                     if team.id == acceptedTeams.last?.id, hasMoreParticipations {
                                         Task { await onLoadMoreParticipations?() }
@@ -553,6 +634,58 @@ struct CompetitionTeamsTab: View {
         } message: {
             if let team = teamToRemove {
                 Text("Remove \(team.teamName) from this competition? This action cannot be undone.")
+            }
+        }
+        .confirmationDialog(
+            "Decline Invitation?",
+            isPresented: Binding(
+                get: { inviteToDecline != nil },
+                set: { if !$0 { inviteToDecline = nil } }
+            ),
+            titleVisibility: .visible
+        ) {
+            if let invite = inviteToDecline {
+                Button("Decline", role: .destructive) {
+                    Task { await viewModel.respondToInvitation(teamId: invite.teamId, accept: false) }
+                }
+            }
+        } message: {
+            Text("Are you sure you want to decline this competition invitation?")
+        }
+        .confirmationDialog(
+            "Reject Application?",
+            isPresented: Binding(
+                get: { appToReject != nil },
+                set: { if !$0 { appToReject = nil } }
+            ),
+            titleVisibility: .visible
+        ) {
+            if let app = appToReject {
+                Button("Reject", role: .destructive) {
+                    Task { await viewModel.handleApplication(teamId: app.teamId, accept: false) }
+                }
+            }
+        } message: {
+            if let app = appToReject {
+                Text("Reject the application from \(app.teamName)?")
+            }
+        }
+        .confirmationDialog(
+            "Withdraw Application?",
+            isPresented: Binding(
+                get: { appToWithdraw != nil },
+                set: { if !$0 { appToWithdraw = nil } }
+            ),
+            titleVisibility: .visible
+        ) {
+            if let app = appToWithdraw {
+                Button("Withdraw", role: .destructive) {
+                    Task { await viewModel.withdrawApplication(teamId: app.teamId) }
+                }
+            }
+        } message: {
+            if let app = appToWithdraw {
+                Text("Withdraw the application for \(app.teamName)? You can re-apply later.")
             }
         }
     }

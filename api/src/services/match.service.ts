@@ -1,4 +1,5 @@
 import { eq, desc, sql } from 'drizzle-orm';
+import { markNotificationsActioned } from './notification.service';
 import { nanoid } from 'nanoid';
 import { Services } from '../utils/helpers';
 import { competitions, teams, matches, notifications, users } from '../db/schema';
@@ -8,6 +9,15 @@ import type { MatchSubmission, GameResult } from '../models';
 function parseSubmission(raw: string | null | undefined): MatchSubmission | null {
   if (!raw) return null;
   try { return JSON.parse(raw); } catch { return null; }
+}
+
+export function transformMatch(match: any) {
+  if (!match) return match;
+  return {
+    ...match,
+    homeSubmission: parseSubmission(match.homeSubmission),
+    awaySubmission: parseSubmission(match.awaySubmission),
+  };
 }
 
 export async function getCompetitionMatches(
@@ -74,7 +84,7 @@ export async function submitResult(
       .set({
         homeScore: data.homeScore,
         awayScore: data.awayScore,
-        games: data.games,
+        ...(data.games ? { games: data.games } : {}),
         status: 'completed',
         confirmedBy: userId,
         submittedBy: userId,
@@ -98,7 +108,8 @@ export async function submitResult(
       });
     }
 
-    return updated;
+    await markNotificationsActioned(services, matchId, 'match', ['score_submitted', 'score_disputed']);
+    return transformMatch(updated);
   }
 
   // Captain submits
@@ -125,7 +136,8 @@ export async function submitResult(
       // Scores agree → auto-complete
       updateData.homeScore = data.homeScore;
       updateData.awayScore = data.awayScore;
-      updateData.games = data.games ?? otherSubmission.games;
+      const resolvedGames = data.games ?? otherSubmission.games;
+      if (resolvedGames) updateData.games = resolvedGames;
       updateData.status = 'completed';
       updateData.submittedBy = userId;
 
@@ -146,7 +158,8 @@ export async function submitResult(
         });
       }
 
-      return updated;
+      await markNotificationsActioned(services, matchId, 'match', ['score_submitted', 'score_disputed']);
+      return transformMatch(updated);
     } else {
       // Scores disagree → disputed
       updateData.status = 'pending_review';
@@ -170,7 +183,7 @@ export async function submitResult(
         });
       }
 
-      return updated;
+      return transformMatch(updated);
     }
   } else {
     // No other submission yet → pending_review, notify other captain + organizer
@@ -203,7 +216,7 @@ export async function submitResult(
       });
     }
 
-    return updated;
+    return transformMatch(updated);
   }
 }
 
@@ -231,7 +244,7 @@ export async function confirmResult(
     .set({
       homeScore: data.homeScore,
       awayScore: data.awayScore,
-      games: data.games,
+      ...(data.games ? { games: data.games } : {}),
       status: 'completed',
       confirmedBy: userId,
       updatedAt: now,
@@ -256,5 +269,6 @@ export async function confirmResult(
     });
   }
 
-  return updated;
+  await markNotificationsActioned(services, matchId, 'match', ['score_submitted', 'score_disputed']);
+  return transformMatch(updated);
 }

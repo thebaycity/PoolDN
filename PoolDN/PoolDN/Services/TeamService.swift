@@ -32,6 +32,10 @@ enum TeamService {
         return try await APIClient.shared.put("/teams/\(id)", body: Body(name: name, city: city, homeVenue: homeVenue))
     }
 
+    static func deleteTeam(_ id: String) async throws {
+        try await APIClient.shared.delete("/teams/\(id)")
+    }
+
     static func invitePlayer(teamId: String, email: String) async throws -> TeamInvitation {
         struct Body: Encodable {
             let email: String
@@ -52,5 +56,9 @@ enum TeamService {
 
     static func getPlayerTeams(playerId: String) async throws -> [Team] {
         try await APIClient.shared.get("/users/\(playerId)/teams")
+    }
+
+    static func getSentInvitations(teamId: String) async throws -> [TeamInvitation] {
+        try await APIClient.shared.get("/teams/\(teamId)/invitations")
     }
 }

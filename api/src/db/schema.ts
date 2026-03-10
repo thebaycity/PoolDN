@@ -133,6 +133,7 @@ export const notifications = sqliteTable('notifications', {
     title: text('title').notNull(),
     message: text('message').notNull(),
     read: integer('read', {mode: 'boolean'}).notNull(),
+    actioned: integer('actioned', {mode: 'boolean'}).notNull().default(false),
     referenceId: text('reference_id'),
     referenceType: text('reference_type'),
     metadata: text('metadata'),

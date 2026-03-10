@@ -8,6 +8,7 @@ struct NotificationListView: View {
     @State private var showMatchDetail = false
     @State private var selectedNotification: AppNotification?
     @State private var selectedTeamInvitation: TeamInvitation?
+    @State private var invitationToDecline: CompetitionInvitation?
 
     var body: some View {
         ScrollView {
@@ -101,7 +102,7 @@ struct NotificationListView: View {
 
                                         HStack(spacing: 8) {
                                             Button {
-                                                Task { await viewModel.respondToCompetitionInvitation(competitionId: invitation.competitionId, teamId: invitation.teamId, accept: false) }
+                                                invitationToDecline = invitation
                                             } label: {
                                                 Text("Decline")
                                                     .font(.caption.weight(.medium))
@@ -129,6 +130,7 @@ struct NotificationListView: View {
                                     .background(Color.theme.surface)
                                 }
                             }
+
                             .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 16, style: .continuous)
@@ -181,11 +183,29 @@ struct NotificationListView: View {
                 }
             }
         }
+        .confirmationDialog("Decline Invitation?", isPresented: .init(
+            get: { invitationToDecline != nil },
+            set: { if !$0 { invitationToDecline = nil } }
+        ), titleVisibility: .visible) {
+            Button("Decline", role: .destructive) {
+                if let inv = invitationToDecline {
+                    Task { await viewModel.respondToCompetitionInvitation(competitionId: inv.competitionId, teamId: inv.teamId, accept: false) }
+                }
+                invitationToDecline = nil
+            }
+            Button("Cancel", role: .cancel) { invitationToDecline = nil }
+        } message: {
+            Text("Are you sure you want to decline this competition invitation?")
+        }
         .sheet(item: $selectedNotification) { notification in
-            NotificationDetailView(notification: notification) {
+            NotificationDetailView(notification: notification, onDismiss: {
                 selectedNotification = nil
                 Task { await viewModel.load() }
-            }
+            }, onRespondToInvitation: { competitionId, teamId, accept in
+                await viewModel.respondToCompetitionInvitation(
+                    competitionId: competitionId, teamId: teamId, accept: accept
+                )
+            })
         }
         .sheet(item: $selectedTeamInvitation) { invitation in
             TeamInvitationDetailView(invitation: invitation) {
@@ -264,7 +284,15 @@ struct NotificationListView: View {
                         .foregroundColor(Color.theme.textPrimary)
                         .lineLimit(1)
                     Spacer()
-                    if !notification.read {
+                    if notification.actioned {
+                        HStack(spacing: 4) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.caption2)
+                            Text("Completed")
+                                .font(.caption2)
+                        }
+                        .foregroundColor(Color.theme.accentGreen)
+                    } else if !notification.read {
                         Circle()
                             .fill(Color.theme.accent)
                             .frame(width: 8, height: 8)

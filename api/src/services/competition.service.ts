@@ -62,11 +62,24 @@ export async function updateCompetition(
   const comp = await db.select().from(competitions).where(eq(competitions.id, id)).get();
   if (!comp) throw AppError.notFound('Competition not found');
   if (comp.organizerId !== userId) throw AppError.forbidden('Only organizer can update');
-  if (comp.status !== 'draft') throw AppError.badRequest('Can only update draft competitions');
+  if (comp.status === 'active' || comp.status === 'completed') {
+    throw AppError.badRequest('Cannot edit an active or completed competition');
+  }
 
-  const { id: _, createdAt, updatedAt, organizerId, status, ...updateFields } = data;
+  // Strip protected fields
+  const { id: _, createdAt, updatedAt, organizerId, status, ...updateFields } = data as any;
+
+  // For upcoming, only allow safe edits (no team size changes once teams applied)
+  let safeFields: Record<string, unknown>;
+  if (comp.status === 'upcoming') {
+    const { teamSizeMin, teamSizeMax, tournamentType, format, ...upcomingAllowed } = updateFields;
+    safeFields = upcomingAllowed;
+  } else {
+    safeFields = updateFields;
+  }
+
   return db.update(competitions)
-    .set({ ...updateFields, updatedAt: Date.now() })
+    .set({ ...safeFields, updatedAt: Date.now() })
     .where(eq(competitions.id, id))
     .returning().get();
 }

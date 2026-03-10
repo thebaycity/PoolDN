@@ -7,6 +7,7 @@ class PlayerDirectoryViewModel {
     var selectedRole: String? = nil   // nil = all, "player", "organizer"
     var isSearching = false
     var errorMessage: String?
+    private(set) var isBrowsing = false  // true = show all users (no filter required)
 
     private var searchTask: Task<Void, Never>?
 
@@ -27,8 +28,8 @@ class PlayerDirectoryViewModel {
     private func scheduleSearch() {
         searchTask?.cancel()
         let q = query.trimmingCharacters(in: .whitespaces)
-        // Need either a query of ≥2 chars OR a role filter to fetch
-        guard q.count >= 2 || selectedRole != nil else {
+        // Need either a query of ≥2 chars, a role filter, or browse mode to fetch
+        guard q.count >= 2 || selectedRole != nil || isBrowsing else {
             results = []
             isSearching = false
             return
@@ -41,8 +42,9 @@ class PlayerDirectoryViewModel {
         }
     }
 
-    /// Browse with no query — just role filter
+    /// Browse all users — no query or role filter required
     func browse() {
+        isBrowsing = true
         scheduleSearch()
     }
 
