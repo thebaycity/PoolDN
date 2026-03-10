@@ -1,0 +1,16 @@
+name = "pooldn-api"
+main = "src/index.ts"
+compatibility_date = "2024-06-01"
+
+[vars]
+JWT_SECRET = "dev-secret-change-in-production"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "pooldn"
+database_id = "local"
+migrations_dir = "migrations"
+
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "pooldn-assets"

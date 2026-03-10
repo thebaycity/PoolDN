@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PoolDN – Logo Design System</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --gold:       #C8991A;
+    --gold-light: #F0C84A;
+    --gold-pale:  #FFE99A;
+    --gold-dark:  #8A6200;
+    --deep:       #070C14;
+    --navy:       #0D1524;
+    --felt:       #0B3324;
+    --felt-mid:   #0F4A34;
+    --white:      #F2EDE0;
+    --muted:      #5A6478;
+    --red:        #C02A1A;
+  }
+
+  body {
+    background: var(--deep);
+    font-family: 'Barlow', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 52px 24px 72px;
+    gap: 52px;
+    color: var(--white);
+  }
+
+  /* ── section label ── */
+  .section-label {
+    font-size: 9px;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 600;
+  }
+
+  /* ════════════════════════════════
+     PRIMARY LOGO CARD
+  ════════════════════════════════ */
+  .primary-card {
+    background: var(--navy);
+    border-radius: 28px;
+    padding: 52px 64px 44px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 28px;
+    border: 1px solid rgba(200,153,26,0.18);
+    box-shadow:
+      0 0 0 1px rgba(200,153,26,0.06),
+      0 40px 80px rgba(0,0,0,0.7),
+      inset 0 1px 0 rgba(200,153,26,0.12);
+    position: relative;
+    overflow: hidden;
+    max-width: 480px;
+    width: 100%;
+  }
+
+  .primary-card::before {
+    content: '';
+    position: absolute;
+    top: -60px; left: 50%;
+    transform: translateX(-50%);
+    width: 320px; height: 200px;
+    background: radial-gradient(ellipse, rgba(200,153,26,0.10) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  /* ── mark animation ── */
+  @keyframes glow-pulse {
+    0%,100% { filter: drop-shadow(0 0 14px rgba(200,153,26,0.40)) drop-shadow(0 0 28px rgba(200,153,26,0.15)); }
+    50%      { filter: drop-shadow(0 0 24px rgba(200,153,26,0.65)) drop-shadow(0 0 50px rgba(200,153,26,0.22)); }
+  }
+  @keyframes orbit {
+    to { transform: rotate(360deg); }
+  }
+  @keyframes counter-orbit {
+    to { transform: rotate(-360deg); }
+  }
+  @keyframes float-up {
+    0%   { opacity: 0; transform: translateY(18px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  .logo-mark-wrap {
+    animation: glow-pulse 4s ease-in-out infinite;
+  }
+
+  .orbit-a { animation: orbit 22s linear infinite; transform-origin: 70px 70px; }
+  .orbit-b { animation: counter-orbit 16s linear infinite; transform-origin: 70px 70px; }
+
+  /* ── wordmark ── */
+  .wordmark {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    animation: float-up 0.9s cubic-bezier(0.16,1,0.3,1) both;
+    animation-delay: 0.2s;
+  }
+
+  .wordmark-main {
+    display: flex;
+    align-items: baseline;
+    gap: 0;
+    line-height: 1;
+  }
+
+  .word-pool {
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: 54px;
+    letter-spacing: 2px;
+    background: linear-gradient(160deg, var(--gold-pale) 0%, var(--gold-light) 40%, var(--gold) 75%, var(--gold-dark) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+  }
+
+  .word-dn {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 54px;
+    font-weight: 900;
+    letter-spacing: -1px;
+    color: var(--white);
+    line-height: 1;
+    position: relative;
+    top: 0px;
+  }
+
+  .word-dn-accent {
+    display: inline-block;
+    background: var(--felt-mid);
+    border: 1px solid rgba(200,153,26,0.35);
+    border-radius: 6px;
+    padding: 2px 8px 1px;
+    margin-left: 3px;
+    line-height: 1;
+    font-size: 50px;
+    vertical-align: middle;
+    position: relative;
+    top: -3px;
+  }
+
+  .tagline {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .divider-line {
+    width: 120px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(200,153,26,0.6), transparent);
+  }
+
+  .city-tag {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 3.5px;
+    text-transform: uppercase;
+    color: rgba(200,153,26,0.55);
+  }
+
+  /* ════════════════════════════════
+     VARIANT GRID
+  ════════════════════════════════ */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    max-width: 480px;
+    width: 100%;
+  }
+
+  .v-card {
+    border-radius: 18px;
+    padding: 28px 16px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+  }
+  .v-card.v-dark  { background: #06090F; border: 1px solid rgba(200,153,26,0.14); }
+  .v-card.v-felt  { background: var(--felt); border: 1px solid rgba(200,153,26,0.22); }
+  .v-card.v-light { background: #EDE8DC; }
+  .v-card.v-gold  { background: linear-gradient(140deg, #C8991A, #7A5A00); }
+
+  .v-label {
+    font-size: 8px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 600;
+    opacity: 0.5;
+  }
+  .v-card.v-light .v-label,
+  .v-card.v-gold  .v-label { color: #2A1A00; }
+
+  .v-name {
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: 22px;
+    letter-spacing: 1px;
+    line-height: 1;
+  }
+  .v-name .dn {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: 22px;
+    color: var(--white);
+  }
+  .v-card.v-light .dn,
+  .v-card.v-gold  .dn  { color: #1A0A00; }
+  .v-card.v-light .pool-txt { background: linear-gradient(135deg,#B07800,#7A5000); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+  .v-card.v-gold  .pool-txt { background: linear-gradient(135deg,#FFF5C0,#E8C060); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+  .pool-txt {
+    background: linear-gradient(135deg, var(--gold-pale), var(--gold-light), var(--gold));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* ════════════════════════════════
+     APP ICON SHOWCASE
+  ════════════════════════════════ */
+  .icon-row {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 24px;
+    max-width: 480px;
+    width: 100%;
+  }
+
+  .icon-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+
+  .app-icon {
+    border-radius: 22.37%;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.55);
+  }
+  .app-icon.xl { width: 128px; height: 128px; }
+  .app-icon.lg { width: 88px;  height: 88px; }
+  .app-icon.sm { width: 60px;  height: 60px; }
+  .app-icon.xs { width: 40px;  height: 40px; }
+
+  .icon-bg-dark  { background: linear-gradient(145deg, #111D30, #060B14); }
+  .icon-bg-felt  { background: linear-gradient(145deg, #0F4A34, #081E14); }
+  .icon-bg-gold  { background: linear-gradient(145deg, #D4A030, #7A5000); }
+
+  .icon-size-tag {
+    font-size: 8px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 600;
+  }
+
+</style>
+</head>
+<body>
+
+<span class="section-label">Brand Identity · PoolDN · Đà Nẵng</span>
+
+<!-- ══════════════════════ PRIMARY LOGO ══════════════════════ -->
+<div class="primary-card">
+
+  <!-- SVG MARK -->
+  <div class="logo-mark-wrap">
+    <svg width="148" height="148" viewBox="0 0 140 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <!-- Ball gradients -->
+        <radialGradient id="eightBall" cx="37%" cy="33%" r="62%">
+          <stop offset="0%" stop-color="#555"/>
+          <stop offset="100%" stop-color="#0A0A0A"/>
+        </radialGradient>
+        <radialGradient id="goldBall" cx="37%" cy="32%" r="60%">
+          <stop offset="0%" stop-color="#FFE898"/>
+          <stop offset="42%" stop-color="#C8991A"/>
+          <stop offset="100%" stop-color="#6B4A00"/>
+        </radialGradient>
+        <radialGradient id="blueBall" cx="35%" cy="30%" r="60%">
+          <stop offset="0%" stop-color="#B8D8FF"/>
+          <stop offset="42%" stop-color="#1566CC"/>
+          <stop offset="100%" stop-color="#07224A"/>
+        </radialGradient>
+        <radialGradient id="redBall" cx="35%" cy="30%" r="60%">
+          <stop offset="0%" stop-color="#FFB0A0"/>
+          <stop offset="42%" stop-color="#C02A1A"/>
+          <stop offset="100%" stop-color="#4A0800"/>
+        </radialGradient>
+        <radialGradient id="cueBall" cx="33%" cy="28%" r="65%">
+          <stop offset="0%" stop-color="#FFFFFF"/>
+          <stop offset="55%" stop-color="#E8E0D0"/>
+          <stop offset="100%" stop-color="#ACA090"/>
+        </radialGradient>
+        <!-- Felt -->
+        <radialGradient id="feltGrad" cx="50%" cy="42%" r="55%">
+          <stop offset="0%" stop-color="#124030"/>
+          <stop offset="100%" stop-color="#071A10"/>
+        </radialGradient>
+        <!-- Cue -->
+        <linearGradient id="cueGrad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#FFE99A"/>
+          <stop offset="35%" stop-color="#C8991A"/>
+          <stop offset="70%" stop-color="#7A5800"/>
+          <stop offset="100%" stop-color="#3A2200"/>
+        </linearGradient>
+        <!-- Ring -->
+        <linearGradient id="ringA" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#F0C84A" stop-opacity="1"/>
+          <stop offset="50%" stop-color="#C8991A" stop-opacity="0.4"/>
+          <stop offset="100%" stop-color="#F0C84A" stop-opacity="1"/>
+        </linearGradient>
+        <linearGradient id="ringB" x1="1" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#C8991A" stop-opacity="0.25"/>
+          <stop offset="100%" stop-color="#C8991A" stop-opacity="0.06"/>
+        </linearGradient>
+        <!-- Shadow -->
+        <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="1" dy="2" stdDeviation="2.5" flood-color="#000" flood-opacity="0.55"/>
+        </filter>
+        <filter id="glow2">
+          <feGaussianBlur stdDeviation="3" result="blur"/>
+          <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+        </filter>
+        <!-- DN badge clip -->
+        <clipPath id="circleClip">
+          <circle cx="70" cy="70" r="54"/>
+        </clipPath>
+      </defs>
+
+      <!-- Outer rings -->
+      <circle cx="70" cy="70" r="67" stroke="url(#ringA)" stroke-width="1.2" fill="none"/>
+      <circle cx="70" cy="70" r="63" stroke="url(#ringB)" stroke-width="0.6" fill="none"/>
+
+      <!-- Orbit dash ring A -->
+      <g class="orbit-a">
+        <circle cx="70" cy="70" r="65" stroke="rgba(200,153,26,0.35)" stroke-width="0.8"
+          stroke-dasharray="3 10" fill="none"/>
+      </g>
+      <!-- Orbit dash ring B (counter) -->
+      <g class="orbit-b">
+        <circle cx="70" cy="70" r="61" stroke="rgba(200,153,26,0.15)" stroke-width="0.5"
+          stroke-dasharray="1.5 14" fill="none"/>
+      </g>
+
+      <!-- Cardinal diamonds -->
+      <polygon points="70,3  73.5,8  70,13  66.5,8"  fill="#C8991A" opacity="0.9"/>
+      <polygon points="70,127 73.5,132 70,137 66.5,132" fill="#C8991A" opacity="0.9"/>
+      <polygon points="3,70   8,66.5  13,70  8,73.5"  fill="#C8991A" opacity="0.9"/>
+      <polygon points="127,70 132,66.5 137,70 132,73.5" fill="#C8991A" opacity="0.9"/>
+
+      <!-- Felt table base -->
+      <circle cx="70" cy="70" r="54" fill="url(#feltGrad)"/>
+      <circle cx="70" cy="70" r="54" stroke="rgba(200,153,26,0.28)" stroke-width="1" fill="none"/>
+
+      <!-- Subtle felt texture lines -->
+      <line x1="16" y1="70" x2="124" y2="70" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
+      <line x1="70" y1="16" x2="70"  y2="124" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
+
+      <!-- Pocket holes (6) -->
+      <circle cx="70"  cy="19"  r="3.8" fill="#050A06" stroke="rgba(200,153,26,0.5)" stroke-width="0.8"/>
+      <circle cx="70"  cy="121" r="3.8" fill="#050A06" stroke="rgba(200,153,26,0.5)" stroke-width="0.8"/>
+      <circle cx="21"  cy="48"  r="3.2" fill="#050A06" stroke="rgba(200,153,26,0.38)" stroke-width="0.7"/>
+      <circle cx="119" cy="48"  r="3.2" fill="#050A06" stroke="rgba(200,153,26,0.38)" stroke-width="0.7"/>
+      <circle cx="21"  cy="92"  r="3.2" fill="#050A06" stroke="rgba(200,153,26,0.38)" stroke-width="0.7"/>
+      <circle cx="119" cy="92"  r="3.2" fill="#050A06" stroke="rgba(200,153,26,0.38)" stroke-width="0.7"/>
+
+      <!-- CUE STICK (diagonal across) -->
+      <!-- shaft -->
+      <rect x="18" y="60" width="105" height="5.5" rx="2.75"
+        transform="rotate(-30 18 60)"
+        fill="url(#cueGrad)" filter="url(#softShadow)"/>
+      <!-- wrap grip bands -->
+      <rect x="18" y="60" width="14" height="5.5" rx="2"
+        transform="rotate(-30 18 60)"
+        fill="rgba(0,0,0,0.45)"/>
+      <!-- ferrule -->
+      <rect x="114" y="60" width="9" height="5.5" rx="1.5"
+        transform="rotate(-30 18 60)"
+        fill="#E8E8E8" opacity="0.85"/>
+      <!-- tip -->
+      <rect x="123" y="60" width="6" height="5.5" rx="1.5"
+        transform="rotate(-30 18 60)"
+        fill="#2288CC"/>
+
+      <!-- ─── BALLS ─── -->
+
+      <!-- 8-ball (dominant centre) -->
+      <circle cx="70" cy="70" r="20" fill="url(#eightBall)" filter="url(#softShadow)"/>
+      <rect x="50.5" y="63.5" width="39" height="13" rx="6.5" fill="#0A0A0A"/>
+      <text x="70" y="73.5"
+        text-anchor="middle"
+        font-family="'Arial Black', 'Impact', sans-serif"
+        font-weight="900"
+        font-size="12.5"
+        fill="#FFFFFF">8</text>
+      <!-- 8-ball highlight -->
+      <ellipse cx="62" cy="62" rx="5.5" ry="3.5" fill="rgba(255,255,255,0.18)" transform="rotate(-22 62 62)"/>
+
+      <!-- Gold / 1-ball (top right) -->
+      <circle cx="96" cy="51" r="13" fill="url(#goldBall)" filter="url(#softShadow)"/>
+      <ellipse cx="91" cy="46" rx="4" ry="2.5" fill="rgba(255,255,255,0.28)" transform="rotate(-18 91 46)"/>
+
+      <!-- Blue / 2-ball (bottom left) -->
+      <circle cx="46" cy="91" r="13" fill="url(#blueBall)" filter="url(#softShadow)"/>
+      <ellipse cx="41" cy="86" rx="4" ry="2.5" fill="rgba(255,255,255,0.22)" transform="rotate(-18 41 86)"/>
+
+      <!-- Red / 3-ball (top left area) -->
+      <circle cx="50" cy="50" r="10" fill="url(#redBall)" filter="url(#softShadow)"/>
+      <ellipse cx="46" cy="46" rx="3" ry="1.8" fill="rgba(255,255,255,0.22)" transform="rotate(-18 46 46)"/>
+
+      <!-- Cue ball (bottom right) -->
+      <circle cx="96" cy="92" r="10" fill="url(#cueBall)" filter="url(#softShadow)"/>
+      <ellipse cx="92" cy="88" rx="3" ry="1.8" fill="rgba(255,255,255,0.45)" transform="rotate(-18 92 88)"/>
+
+    </svg>
+  </div>
+
+  <!-- WORDMARK -->
+  <div class="wordmark">
+    <div class="wordmark-main">
+      <span class="word-pool">Pool</span><span class="word-dn"><span class="word-dn-accent">DN</span></span>
+    </div>
+    <div class="divider-line"></div>
+    <div class="tagline">Billiards League Management</div>
+    <div class="city-tag">🇻🇳 &nbsp;Đà Nẵng · Việt Nam</div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════ COLOR VARIANTS ══════════════════════ -->
+<span class="section-label">Color Variants</span>
+<div class="grid-2">
+
+  <!-- Dark -->
+  <div class="v-card v-dark">
+    <span class="v-label">Dark · Primary</span>
+    <svg width="64" height="64" viewBox="0 0 140 140" fill="none">
+      <defs>
+        <radialGradient id="d_eb" cx="37%" cy="33%" r="62%"><stop offset="0%" stop-color="#555"/><stop offset="100%" stop-color="#0A0A0A"/></radialGradient>
+        <radialGradient id="d_gb" cx="37%" cy="32%" r="60%"><stop offset="0%" stop-color="#FFE898"/><stop offset="42%" stop-color="#C8991A"/><stop offset="100%" stop-color="#6B4A00"/></radialGradient>
+        <radialGradient id="d_bb" cx="35%" cy="30%" r="60%"><stop offset="0%" stop-color="#B8D8FF"/><stop offset="42%" stop-color="#1566CC"/><stop offset="100%" stop-color="#07224A"/></radialGradient>
+        <radialGradient id="d_cb" cx="33%" cy="28%" r="65%"><stop offset="0%" stop-color="#FFF"/><stop offset="55%" stop-color="#E8E0D0"/><stop offset="100%" stop-color="#ACA090"/></radialGradient>
+        <radialGradient id="d_fg" cx="50%" cy="42%" r="55%"><stop offset="0%" stop-color="#124030"/><stop offset="100%" stop-color="#071A10"/></radialGradient>
+        <linearGradient id="d_cg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FFE99A"/><stop offset="50%" stop-color="#C8991A"/><stop offset="100%" stop-color="#3A2200"/></linearGradient>
+        <linearGradient id="d_rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#F0C84A"/><stop offset="100%" stop-color="#C8991A" stop-opacity="0.5"/></linearGradient>
+      </defs>
+      <circle cx="70" cy="70" r="67" stroke="url(#d_rg)" stroke-width="1.2" fill="none"/>
+      <circle cx="70" cy="70" r="54" fill="url(#d_fg)"/>
+      <circle cx="70" cy="70" r="54" stroke="rgba(200,153,26,0.28)" stroke-width="1" fill="none"/>
+      <circle cx="70" cy="19" r="3.8" fill="#050A06" stroke="rgba(200,153,26,0.5)" stroke-width="0.8"/>
+      <circle cx="21" cy="48" r="3.2" fill="#050A06" stroke="rgba(200,153,26,0.38)" stroke-width="0.7"/>
+      <circle cx="119" cy="48" r="3.2" fill="#050A06" stroke="rgba(200,153,26,0.38)" stroke-width="0.7"/>
+      <circle cx="21" cy="92" r="3.2" fill="#050A06" stroke="rgba(200,153,26,0.38)" stroke-width="0.7"/>
+      <circle cx="119" cy="92" r="3.2" fill="#050A06" stroke="rgba(200,153,26,0.38)" stroke-width="0.7"/>
+      <circle cx="70" cy="121" r="3.8" fill="#050A06" stroke="rgba(200,153,26,0.5)" stroke-width="0.8"/>
+      <rect x="18" y="60" width="105" height="5.5" rx="2.75" transform="rotate(-30 18 60)" fill="url(#d_cg)"/>
+      <rect x="123" y="60" width="6" height="5.5" rx="1.5" transform="rotate(-30 18 60)" fill="#2288CC"/>
+      <circle cx="70" cy="70" r="20" fill="url(#d_eb)"/>
+      <rect x="50.5" y="63.5" width="39" height="13" rx="6.5" fill="#0A0A0A"/>
+      <text x="70" y="73.5" text-anchor="middle" font-family="Arial Black,sans-serif" font-weight="900" font-size="12.5" fill="#FFF">8</text>
+      <circle cx="96" cy="51" r="13" fill="url(#d_gb)"/>
+      <circle cx="46" cy="91" r="13" fill="url(#d_bb)"/>
+      <circle cx="96" cy="92" r="10" fill="url(#d_cb)"/>
+    </svg>
+    <div class="v-name"><span class="pool-txt">Pool</span><span class="dn">DN</span></div>
+  </div>
+
+  <!-- Felt green -->
+  <div class="v-card v-felt">
+    <span class="v-label">Felt Green</span>
+    <svg width="64" height="64" viewBox="0 0 140 140" fill="none">
+      <defs>
+        <radialGradient id="f_eb" cx="37%" cy="33%" r="62%"><stop offset="0%" stop-color="#555"/><stop offset="100%" stop-color="#0A0A0A"/></radialGradient>
+        <radialGradient id="f_gb" cx="37%" cy="32%" r="60%"><stop offset="0%" stop-color="#FFE898"/><stop offset="42%" stop-color="#C8991A"/><stop offset="100%" stop-color="#6B4A00"/></radialGradient>
+        <radialGradient id="f_bb" cx="35%" cy="30%" r="60%"><stop offset="0%" stop-color="#B8D8FF"/><stop offset="42%" stop-color="#1566CC"/><stop offset="100%" stop-color="#07224A"/></radialGradient>
+        <radialGradient id="f_cb" cx="33%" cy="28%" r="65%"><stop offset="0%" stop-color="#FFF"/><stop offset="55%" stop-color="#E8E0D0"/><stop offset="100%" stop-color="#ACA090"/></radialGradient>
+        <linearGradient id="f_cg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FFE99A"/><stop offset="50%" stop-color="#C8991A"/><stop offset="100%" stop-color="#3A2200"/></linearGradient>
+        <linearGradient id="f_rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#F0C84A"/><stop offset="100%" stop-color="#C8991A" stop-opacity="0.5"/></linearGradient>
+      </defs>
+      <circle cx="70" cy="70" r="67" stroke="url(#f_rg)" stroke-width="1.2" fill="none"/>
+      <circle cx="70" cy="70" r="54" fill="rgba(0,0,0,0.3)"/>
+      <circle cx="70" cy="70" r="54" stroke="rgba(200,153,26,0.35)" stroke-width="1" fill="none"/>
+      <circle cx="70" cy="19" r="3.8" fill="#050A06" stroke="rgba(200,153,26,0.5)" stroke-width="0.8"/>
+      <circle cx="21" cy="48" r="3.2" fill="#050A06" stroke="rgba(200,153,26,0.38)" stroke-width="0.7"/>
+      <circle cx="119" cy="48" r="3.2" fill="#050A06" stroke="rgba(200,153,26,0.38)" stroke-width="0.7"/>
+      <circle cx="21" cy="92" r="3.2" fill="#050A06" stroke="rgba(200,153,26,0.38)" stroke-width="0.7"/>
+      <circle cx="119" cy="92" r="3.2" fill="#050A06" stroke="rgba(200,153,26,0.38)" stroke-width="0.7"/>
+      <circle cx="70" cy="121" r="3.8" fill="#050A06" stroke="rgba(200,153,26,0.5)" stroke-width="0.8"/>
+      <rect x="18" y="60" width="105" height="5.5" rx="2.75" transform="rotate(-30 18 60)" fill="url(#f_cg)"/>
+      <rect x="123" y="60" width="6" height="5.5" rx="1.5" transform="rotate(-30 18 60)" fill="#2288CC"/>
+      <circle cx="70" cy="70" r="20" fill="url(#f_eb)"/>
+      <rect x="50.5" y="63.5" width="39" height="13" rx="6.5" fill="#0A0A0A"/>
+      <text x="70" y="73.5" text-anchor="middle" font-family="Arial Black,sans-serif" font-weight="900" font-size="12.5" fill="#FFF">8</text>
+      <circle cx="96" cy="51" r="13" fill="url(#f_gb)"/>
+      <circle cx="46" cy="91" r="13" fill="url(#f_bb)"/>
+      <circle cx="96" cy="92" r="10" fill="url(#f_cb)"/>
+    </svg>
+    <div class="v-name"><span class="pool-txt">Pool</span><span class="dn">DN</span></div>
+  </div>
+
+  <!-- Light -->
+  <div class="v-card v-light">
+    <span class="v-label">Light</span>
+    <svg width="64" height="64" viewBox="0 0 140 140" fill="none">
+      <defs>
+        <radialGradient id="l_eb" cx="37%" cy="33%" r="62%"><stop offset="0%" stop-color="#555"/><stop offset="100%" stop-color="#0A0A0A"/></radialGradient>
+        <radialGradient id="l_gb" cx="37%" cy="32%" r="60%"><stop offset="0%" stop-color="#FFE898"/><stop offset="42%" stop-color="#C8991A"/><stop offset="100%" stop-color="#6B4A00"/></radialGradient>
+        <radialGradient id="l_bb" cx="35%" cy="30%" r="60%"><stop offset="0%" stop-color="#B8D8FF"/><stop offset="42%" stop-color="#1566CC"/><stop offset="100%" stop-color="#07224A"/></radialGradient>
+        <radialGradient id="l_cb" cx="33%" cy="28%" r="65%"><stop offset="0%" stop-color="#FFF"/><stop offset="55%" stop-color="#E8E0D0"/><stop offset="100%" stop-color="#ACA090"/></radialGradient>
+        <radialGradient id="l_fg" cx="50%" cy="42%" r="55%"><stop offset="0%" stop-color="#124030"/><stop offset="100%" stop-color="#071A10"/></radialGradient>
+        <linearGradient id="l_cg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FFE99A"/><stop offset="50%" stop-color="#C8991A"/><stop offset="100%" stop-color="#3A2200"/></linearGradient>
+        <linearGradient id="l_rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#B07800"/><stop offset="100%" stop-color="#7A5000" stop-opacity="0.7"/></linearGradient>
+      </defs>
+      <circle cx="70" cy="70" r="67" stroke="url(#l_rg)" stroke-width="1.5" fill="none"/>
+      <circle cx="70" cy="70" r="54" fill="url(#l_fg)"/>
+      <circle cx="70" cy="70" r="54" stroke="rgba(160,120,20,0.45)" stroke-width="1" fill="none"/>
+      <circle cx="70" cy="19" r="3.8" fill="#050A06" stroke="rgba(200,153,26,0.6)" stroke-width="0.8"/>
+      <circle cx="21" cy="48" r="3.2" fill="#050A06" stroke="rgba(200,153,26,0.5)" stroke-width="0.7"/>
+      <circle cx="119" cy="48" r="3.2" fill="#050A06" stroke="rgba(200,153,26,0.5)" stroke-width="0.7"/>
+      <circle cx="21" cy="92" r="3.2" fill="#050A06" stroke="rgba(200,153,26,0.5)" stroke-width="0.7"/>
+      <circle cx="119" cy="92" r="3.2" fill="#050A06" stroke="rgba(200,153,26,0.5)" stroke-width="0.7"/>
+      <circle cx="70" cy="121" r="3.8" fill="#050A06" stroke="rgba(200,153,26,0.6)" stroke-width="0.8"/>
+      <rect x="18" y="60" width="105" height="5.5" rx="2.75" transform="rotate(-30 18 60)" fill="url(#l_cg)"/>
+      <rect x="123" y="60" width="6" height="5.5" rx="1.5" transform="rotate(-30 18 60)" fill="#2288CC"/>
+      <circle cx="70" cy="70" r="20" fill="url(#l_eb)"/>
+      <rect x="50.5" y="63.5" width="39" height="13" rx="6.5" fill="#0A0A0A"/>
+      <text x="70" y="73.5" text-anchor="middle" font-family="Arial Black,sans-serif" font-weight="900" font-size="12.5" fill="#FFF">8</text>
+      <circle cx="96" cy="51" r="13" fill="url(#l_gb)"/>
+      <circle cx="46" cy="91" r="13" fill="url(#l_bb)"/>
+      <circle cx="96" cy="92" r="10" fill="url(#l_cb)"/>
+    </svg>
+    <div class="v-name"><span class="pool-txt">Pool</span><span class="dn" style="color:#1A1000;">DN</span></div>
+  </div>
+
+  <!-- Gold -->
+  <div class="v-card v-gold">
+    <span class="v-label">Gold Premium</span>
+    <svg width="64" height="64" viewBox="0 0 140 140" fill="none">
+      <defs>
+        <radialGradient id="g_eb" cx="37%" cy="33%" r="62%"><stop offset="0%" stop-color="#555"/><stop offset="100%" stop-color="#0A0A0A"/></radialGradient>
+        <radialGradient id="g_gb" cx="37%" cy="32%" r="60%"><stop offset="0%" stop-color="#FFE898"/><stop offset="42%" stop-color="#C8991A"/><stop offset="100%" stop-color="#6B4A00"/></radialGradient>
+        <radialGradient id="g_bb" cx="35%" cy="30%" r="60%"><stop offset="0%" stop-color="#B8D8FF"/><stop offset="42%" stop-color="#1566CC"/><stop offset="100%" stop-color="#07224A"/></radialGradient>
+        <radialGradient id="g_cb" cx="33%" cy="28%" r="65%"><stop offset="0%" stop-color="#FFF"/><stop offset="55%" stop-color="#E8E0D0"/><stop offset="100%" stop-color="#ACA090"/></radialGradient>
+        <radialGradient id="g_fg" cx="50%" cy="42%" r="55%"><stop offset="0%" stop-color="#124030"/><stop offset="100%" stop-color="#071A10"/></radialGradient>
+        <linearGradient id="g_cg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FFF5D0"/><stop offset="50%" stop-color="#E0A818"/><stop offset="100%" stop-color="#3A2200"/></linearGradient>
+      </defs>
+      <circle cx="70" cy="70" r="67" stroke="rgba(255,255,255,0.35)" stroke-width="1" fill="none"/>
+      <circle cx="70" cy="70" r="54" fill="url(#g_fg)"/>
+      <circle cx="70" cy="70" r="54" stroke="rgba(255,255,255,0.2)" stroke-width="1" fill="none"/>
+      <circle cx="70" cy="19" r="3.8" fill="#050A06" stroke="rgba(255,255,255,0.4)" stroke-width="0.8"/>
+      <circle cx="21" cy="48" r="3.2" fill="#050A06" stroke="rgba(255,255,255,0.3)" stroke-width="0.7"/>
+      <circle cx="119" cy="48" r="3.2" fill="#050A06" stroke="rgba(255,255,255,0.3)" stroke-width="0.7"/>
+      <circle cx="21" cy="92" r="3.2" fill="#050A06" stroke="rgba(255,255,255,0.3)" stroke-width="0.7"/>
+      <circle cx="119" cy="92" r="3.2" fill="#050A06" stroke="rgba(255,255,255,0.3)" stroke-width="0.7"/>
+      <circle cx="70" cy="121" r="3.8" fill="#050A06" stroke="rgba(255,255,255,0.4)" stroke-width="0.8"/>
+      <rect x="18" y="60" width="105" height="5.5" rx="2.75" transform="rotate(-30 18 60)" fill="url(#g_cg)"/>
+      <rect x="123" y="60" width="6" height="5.5" rx="1.5" transform="rotate(-30 18 60)" fill="#3AABFF"/>
+      <circle cx="70" cy="70" r="20" fill="url(#g_eb)"/>
+      <rect x="50.5" y="63.5" width="39" height="13" rx="6.5" fill="#0A0A0A"/>
+      <text x="70" y="73.5" text-anchor="middle" font-family="Arial Black,sans-serif" font-weight="900" font-size="12.5" fill="#FFF">8</text>
+      <circle cx="96" cy="51" r="13" fill="url(#g_gb)"/>
+      <circle cx="46" cy="91" r="13" fill="url(#g_bb)"/>
+      <circle cx="96" cy="92" r="10" fill="url(#g_cb)"/>
+    </svg>
+    <div class="v-name"><span class="pool-txt">Pool</span><span class="dn" style="color:#0A0600;">DN</span></div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════ APP ICONS ══════════════════════ -->
+<span class="section-label">App Icon Sizes</span>
+<div class="icon-row">
+
+  <!-- 1024 -->
+  <div class="icon-wrap">
+    <div class="app-icon xl icon-bg-dark">
+      <svg width="96" height="96" viewBox="0 0 140 140" fill="none">
+        <defs>
+          <radialGradient id="xi_eb" cx="37%" cy="33%" r="62%"><stop offset="0%" stop-color="#555"/><stop offset="100%" stop-color="#0A0A0A"/></radialGradient>
+          <radialGradient id="xi_gb" cx="37%" cy="32%" r="60%"><stop offset="0%" stop-color="#FFE898"/><stop offset="42%" stop-color="#C8991A"/><stop offset="100%" stop-color="#6B4A00"/></radialGradient>
+          <radialGradient id="xi_bb" cx="35%" cy="30%" r="60%"><stop offset="0%" stop-color="#B8D8FF"/><stop offset="42%" stop-color="#1566CC"/><stop offset="100%" stop-color="#07224A"/></radialGradient>
+          <radialGradient id="xi_cb" cx="33%" cy="28%" r="65%"><stop offset="0%" stop-color="#FFF"/><stop offset="55%" stop-color="#E8E0D0"/><stop offset="100%" stop-color="#ACA090"/></radialGradient>
+          <radialGradient id="xi_fg" cx="50%" cy="42%" r="55%"><stop offset="0%" stop-color="#124030"/><stop offset="100%" stop-color="#071A10"/></radialGradient>
+          <linearGradient id="xi_cg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FFE99A"/><stop offset="50%" stop-color="#C8991A"/><stop offset="100%" stop-color="#3A2200"/></linearGradient>
+          <linearGradient id="xi_rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#F0C84A"/><stop offset="100%" stop-color="#C8991A" stop-opacity="0.4"/></linearGradient>
+        </defs>
+        <circle cx="70" cy="70" r="67" stroke="url(#xi_rg)" stroke-width="1.2" fill="none"/>
+        <circle cx="70" cy="70" r="54" fill="url(#xi_fg)"/>
+        <circle cx="70" cy="70" r="54" stroke="rgba(200,153,26,0.28)" stroke-width="1" fill="none"/>
+        <circle cx="70" cy="19" r="3.8" fill="#050A06" stroke="rgba(200,153,26,0.5)" stroke-width="0.8"/>
+        <circle cx="21" cy="48" r="3.2" fill="#050A06" stroke="rgba(200,153,26,0.38)" stroke-width="0.7"/>
+        <circle cx="119" cy="48" r="3.2" fill="#050A06" stroke="rgba(200,153,26,0.38)" stroke-width="0.7"/>
+        <circle cx="21" cy="92" r="3.2" fill="#050A06" stroke="rgba(200,153,26,0.38)" stroke-width="0.7"/>
+        <circle cx="119" cy="92" r="3.2" fill="#050A06" stroke="rgba(200,153,26,0.38)" stroke-width="0.7"/>
+        <circle cx="70" cy="121" r="3.8" fill="#050A06" stroke="rgba(200,153,26,0.5)" stroke-width="0.8"/>
+        <rect x="18" y="60" width="105" height="5.5" rx="2.75" transform="rotate(-30 18 60)" fill="url(#xi_cg)"/>
+        <rect x="123" y="60" width="6" height="5.5" rx="1.5" transform="rotate(-30 18 60)" fill="#2288CC"/>
+        <circle cx="70" cy="70" r="20" fill="url(#xi_eb)"/>
+        <rect x="50.5" y="63.5" width="39" height="13" rx="6.5" fill="#0A0A0A"/>
+        <text x="70" y="73.5" text-anchor="middle" font-family="Arial Black,sans-serif" font-weight="900" font-size="12.5" fill="#FFF">8</text>
+        <circle cx="96" cy="51" r="13" fill="url(#xi_gb)"/>
+        <circle cx="46" cy="91" r="13" fill="url(#xi_bb)"/>
+        <circle cx="96" cy="92" r="10" fill="url(#xi_cb)"/>
+        <!-- wordmark inside icon -->
+        <text x="70" y="118" text-anchor="middle" font-family="'Arial Black',sans-serif" font-weight="900" font-size="9" fill="#C8991A" letter-spacing="1">PoolDN</text>
+      </svg>
+    </div>
+    <span class="icon-size-tag">1024 px</span>
+  </div>
+
+  <!-- 180 -->
+  <div class="icon-wrap">
+    <div class="app-icon lg icon-bg-felt">
+      <svg width="66" height="66" viewBox="0 0 140 140" fill="none">
+        <defs>
+          <radialGradient id="li_eb" cx="37%" cy="33%" r="62%"><stop offset="0%" stop-color="#555"/><stop offset="100%" stop-color="#0A0A0A"/></radialGradient>
+          <radialGradient id="li_gb" cx="37%" cy="32%" r="60%"><stop offset="0%" stop-color="#FFE898"/><stop offset="42%" stop-color="#C8991A"/><stop offset="100%" stop-color="#6B4A00"/></radialGradient>
+          <radialGradient id="li_bb" cx="35%" cy="30%" r="60%"><stop offset="0%" stop-color="#B8D8FF"/><stop offset="42%" stop-color="#1566CC"/><stop offset="100%" stop-color="#07224A"/></radialGradient>
+          <radialGradient id="li_cb" cx="33%" cy="28%" r="65%"><stop offset="0%" stop-color="#FFF"/><stop offset="55%" stop-color="#E8E0D0"/><stop offset="100%" stop-color="#ACA090"/></radialGradient>
+          <linearGradient id="li_cg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FFE99A"/><stop offset="50%" stop-color="#C8991A"/><stop offset="100%" stop-color="#3A2200"/></linearGradient>
+          <linearGradient id="li_rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#F0C84A"/><stop offset="100%" stop-color="#C8991A" stop-opacity="0.4"/></linearGradient>
+        </defs>
+        <circle cx="70" cy="70" r="67" stroke="url(#li_rg)" stroke-width="1.2" fill="none"/>
+        <circle cx="70" cy="70" r="54" fill="rgba(0,0,0,0.3)"/>
+        <circle cx="70" cy="70" r="54" stroke="rgba(200,153,26,0.4)" stroke-width="1" fill="none"/>
+        <rect x="18" y="60" width="105" height="5.5" rx="2.75" transform="rotate(-30 18 60)" fill="url(#li_cg)"/>
+        <circle cx="70" cy="70" r="20" fill="url(#li_eb)"/>
+        <rect x="50.5" y="63.5" width="39" height="13" rx="6.5" fill="#0A0A0A"/>
+        <text x="70" y="73.5" text-anchor="middle" font-family="Arial Black,sans-serif" font-weight="900" font-size="12.5" fill="#FFF">8</text>
+        <circle cx="96" cy="51" r="13" fill="url(#li_gb)"/>
+        <circle cx="46" cy="91" r="13" fill="url(#li_bb)"/>
+        <circle cx="96" cy="92" r="10" fill="url(#li_cb)"/>
+      </svg>
+    </div>
+    <span class="icon-size-tag">180 px</span>
+  </div>
+
+  <!-- 60 -->
+  <div class="icon-wrap">
+    <div class="app-icon sm icon-bg-gold">
+      <svg width="44" height="44" viewBox="0 0 140 140" fill="none">
+        <defs>
+          <radialGradient id="si_eb" cx="37%" cy="33%" r="62%"><stop offset="0%" stop-color="#555"/><stop offset="100%" stop-color="#0A0A0A"/></radialGradient>
+          <radialGradient id="si_gb" cx="37%" cy="32%" r="60%"><stop offset="0%" stop-color="#FFE898"/><stop offset="42%" stop-color="#C8991A"/><stop offset="100%" stop-color="#6B4A00"/></radialGradient>
+          <radialGradient id="si_bb" cx="35%" cy="30%" r="60%"><stop offset="0%" stop-color="#B8D8FF"/><stop offset="42%" stop-color="#1566CC"/><stop offset="100%" stop-color="#07224A"/></radialGradient>
+          <radialGradient id="si_cb" cx="33%" cy="28%" r="65%"><stop offset="0%" stop-color="#FFF"/><stop offset="55%" stop-color="#E8E0D0"/><stop offset="100%" stop-color="#ACA090"/></radialGradient>
+          <radialGradient id="si_fg" cx="50%" cy="42%" r="55%"><stop offset="0%" stop-color="#124030"/><stop offset="100%" stop-color="#071A10"/></radialGradient>
+          <linearGradient id="si_cg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FFF5D0"/><stop offset="50%" stop-color="#E0A818"/><stop offset="100%" stop-color="#3A2200"/></linearGradient>
+        </defs>
+        <circle cx="70" cy="70" r="54" fill="url(#si_fg)"/>
+        <circle cx="70" cy="70" r="54" stroke="rgba(255,255,255,0.18)" stroke-width="1" fill="none"/>
+        <rect x="18" y="60" width="105" height="5.5" rx="2.75" transform="rotate(-30 18 60)" fill="url(#si_cg)"/>
+        <circle cx="70" cy="70" r="20" fill="url(#si_eb)"/>
+        <rect x="50.5" y="63.5" width="39" height="13" rx="6.5" fill="#0A0A0A"/>
+        <text x="70" y="73.5" text-anchor="middle" font-family="Arial Black,sans-serif" font-weight="900" font-size="12.5" fill="#FFF">8</text>
+        <circle cx="96" cy="51" r="13" fill="url(#si_gb)"/>
+        <circle cx="46" cy="91" r="13" fill="url(#si_bb)"/>
+        <circle cx="96" cy="92" r="10" fill="url(#si_cb)"/>
+      </svg>
+    </div>
+    <span class="icon-size-tag">60 px</span>
+  </div>
+
+  <!-- 40 notification -->
+  <div class="icon-wrap">
+    <div class="app-icon xs icon-bg-dark">
+      <svg width="28" height="28" viewBox="0 0 140 140" fill="none">
+        <defs>
+          <radialGradient id="xs_eb" cx="37%" cy="33%" r="62%"><stop offset="0%" stop-color="#555"/><stop offset="100%" stop-color="#0A0A0A"/></radialGradient>
+          <radialGradient id="xs_gb" cx="37%" cy="32%" r="60%"><stop offset="0%" stop-color="#FFE898"/><stop offset="42%" stop-color="#C8991A"/><stop offset="100%" stop-color="#6B4A00"/></radialGradient>
+          <radialGradient id="xs_bb" cx="35%" cy="30%" r="60%"><stop offset="0%" stop-color="#B8D8FF"/><stop offset="42%" stop-color="#1566CC"/><stop offset="100%" stop-color="#07224A"/></radialGradient>
+          <radialGradient id="xs_fg" cx="50%" cy="42%" r="55%"><stop offset="0%" stop-color="#124030"/><stop offset="100%" stop-color="#071A10"/></radialGradient>
+          <linearGradient id="xs_cg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FFE99A"/><stop offset="50%" stop-color="#C8991A"/><stop offset="100%" stop-color="#3A2200"/></linearGradient>
+        </defs>
+        <circle cx="70" cy="70" r="54" fill="url(#xs_fg)"/>
+        <rect x="18" y="60" width="105" height="5.5" rx="2.75" transform="rotate(-30 18 60)" fill="url(#xs_cg)"/>
+        <circle cx="70" cy="70" r="20" fill="url(#xs_eb)"/>
+        <rect x="50.5" y="63.5" width="39" height="13" rx="6.5" fill="#0A0A0A"/>
+        <text x="70" y="73.5" text-anchor="middle" font-family="Arial Black,sans-serif" font-weight="900" font-size="12.5" fill="#FFF">8</text>
+        <circle cx="96" cy="51" r="13" fill="url(#xs_gb)"/>
+        <circle cx="46" cy="91" r="13" fill="url(#xs_bb)"/>
+      </svg>
+    </div>
+    <span class="icon-size-tag">40 px</span>
+  </div>
+
+</div>
+
+<!-- footer -->
+<div style="text-align:center;font-family:'Barlow Condensed',sans-serif;font-size:9px;letter-spacing:4px;text-transform:uppercase;color:#2E3848;font-weight:600;">
+  PoolDN · Billiards League Management · Đà Nẵng 2025
+</div>
+
+</body>
+</html>
